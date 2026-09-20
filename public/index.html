@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"  content="width=device-width, initial-scale=1">
+  <title>Чат с YandexGPT</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <main class="chat">
+    <header>
+      <h1>YandexGPT</h1>
+    </header>
+
+    <section id="messages"></section>
+
+    <form id="chat-form">
+      <textarea
+        id="prompt"
+        placeholder="Введите сообщение..."
+        required
+      ></textarea>
+
+      <button id="send-button" type="submit">
+        Отправить
+      </button>
+
+      <button id="mic-btn" type="button">Голосовой ввод</button>
+    </form>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
