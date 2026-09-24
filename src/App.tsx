@@ -3,6 +3,7 @@ import {
   ChevronDown,
   Lightbulb,
   Mic,
+  Pause,
   Send,
   Square,
   UserRound,
@@ -17,10 +18,16 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
 type ChatRole = "user" | "assistant";
-type DialogKind = "hint" | "pause" | "finish";
+type DialogKind = "intro" | "hint" | "pause" | "finish";
 type SessionState = "active" | "paused" | "finished";
 
 const dialogContent = {
+  intro: {
+    title: "Как устроена практика",
+    description: "Готовых вариантов и текущего балла во время разговора нет. Подсказка появляется только по вашему запросу и влияет лишь на отметку самостоятельности.",
+    secondary: "К уроку",
+    primary: "Начать практику",
+  },
   hint: {
     title: "Подсказка",
     description: "Подсказка не уменьшает оценку качества ответа, но попытка будет отмечена как выполненная с поддержкой.",
@@ -70,6 +77,108 @@ const waveform = [
   29, 21, 51, 36, 69, 40, 26, 58, 72, 33, 24, 18, 27, 39, 56, 43,
 ];
 
+function ProgressTrack({ activeStep }: { activeStep: number }) {
+  return (
+    <ol className="progress-track" aria-label="Этапы урока">
+      {progressSteps.map((step) => (
+        <li
+          key={step.number}
+          className={cn("progress-step", step.number === activeStep && "active")}
+          aria-label={`${step.number}. ${step.label}`}
+          aria-current={step.number === activeStep ? "step" : undefined}
+        >
+          <ProgressNumber number={step.number} />
+          <small aria-hidden="true">{step.label}</small>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function BriefScreen() {
+  return (
+    <main className="arena-shell brief-screen">
+      <header className="arena-header">
+        <div className="brand-block">
+          <div className="brand-mark" aria-hidden="true">
+            <BrandLogo className="brand-logo" />
+          </div>
+          <div>
+            <h1>Позиции и интересы</h1>
+            <p>Блок 3 · Урок 2 · Пилот изменений на заводе</p>
+          </div>
+        </div>
+        <ProgressTrack activeStep={2} />
+        <div className="header-actions">
+          <span className="brief-exit" aria-hidden="true">Выйти из урока</span>
+        </div>
+      </header>
+
+      <section className="brief-screen-grid" aria-label="Бриф">
+        <article className="brief-screen-overview" aria-label="Описание ситуации">
+          <span className="brief-screen-kicker">БРИФ ВСТРЕЧИ</span>
+          <h2 className="brief-screen-title">Пилот изменений на заводе</h2>
+          <section className="brief-screen-section">
+            <h3>РОЛЬ</h3>
+            <p>Вы руководите интеграционным проектом международной производственной компании.</p>
+          </section>
+          <section className="brief-screen-section">
+            <h3>СИТУАЦИЯ</h3>
+            <p>Компания недавно приобрела региональный завод. Головной офис предлагает сделать подбор, оценку и обучение сотрудников прозрачнее. Директор завода требует отложить изменения: через десять недель запускается обновлённая линия, а мастера уже перегружены.</p>
+          </section>
+          <section className="brief-screen-task">
+            <h3>ВАША ЗАДАЧА</h3>
+            <p>Понять, что стоит за требованием об отсрочке, и договориться о следующем шаге.</p>
+          </section>
+          <section className="brief-screen-section brief-screen-lesson">
+            <h3>ФОКУС УРОКА</h3>
+            <p>На этом уроке важнее проверить интересы, чем убедить контрагента любой ценой. Скрытые интересы директора в брифе не раскрываются — их предстоит выяснить в разговоре.</p>
+          </section>
+        </article>
+
+        <div className="brief-screen-side">
+          <div className="role-chip brief-screen-role">
+            <UserRound size={18} />
+            Директор завода · AI-контрагент
+          </div>
+          <article className="brief-screen-facts" aria-label="Факты">
+            <h2>Известные факты</h2>
+            <ul className="brief-screen-facts-list">
+              <li>Запуск линии через десять недель</li>
+              <li>Мастера участвуют и в запуске, и в кадровых решениях</li>
+              <li>Головная компания хочет начать изменения в текущем квартале</li>
+              <li>Директор предлагает вернуться к вопросу через полгода</li>
+            </ul>
+            <p className="brief-screen-footnote">Факты остаются под рукой всю встречу — в панели «Бриф и факты».</p>
+          </article>
+          <article className="brief-screen-how" aria-label="Как проходит встреча">
+            <h2>Как проходит встреча</h2>
+            <div className="brief-screen-how-row">
+              <span className="brief-screen-how-icon"><Mic aria-hidden="true" /></span>
+              <div><h3>Голос или текст</h3><p>Переключайтесь в любой момент. Распознанную речь можно исправить до отправки.</p></div>
+            </div>
+            <div className="brief-screen-how-row">
+              <span className="brief-screen-how-icon"><Lightbulb aria-hidden="true" /></span>
+              <div><h3>Подсказка — только по запросу</h3><p>Наставник подскажет в три шага и сам в разговор не вмешивается.</p></div>
+            </div>
+            <div className="brief-screen-how-row">
+              <span className="brief-screen-how-icon brief-screen-pause-icon"><Pause aria-hidden="true" /></span>
+              <div><h3>Пауза и завершение</h3><p>На паузе директор ждёт. Завершить встречу можно с подтверждением.</p></div>
+            </div>
+          </article>
+          <div className="brief-screen-actions">
+            <Button type="button" variant="outline" className="brief-back">Вернуться к теории</Button>
+            <Button type="button" className="brief-start" onClick={() => { window.location.search = "?screen=meeting"; }}>
+              Начать встречу
+              <ArrowRight aria-hidden="true" />
+            </Button>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 function formatTime(seconds: number) {
   const minutes = Math.floor(seconds / 60)
     .toString()
@@ -100,7 +209,11 @@ export default function App() {
   const [briefOpen, setBriefOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [hintVisible, setHintVisible] = useState(false);
-  const [activeDialog, setActiveDialog] = useState<DialogKind | null>(null);
+  const [activeDialog, setActiveDialog] = useState<DialogKind | null>(() =>
+    new URLSearchParams(window.location.search).get("screen") === "meeting"
+      ? "intro"
+      : null,
+  );
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -400,7 +513,7 @@ export default function App() {
 
   function openDialog(kind: DialogKind) {
     if (sessionStateRef.current === "finished") return;
-    if (kind !== "hint") pauseSession();
+    if (kind === "pause" || kind === "finish") pauseSession();
     setActiveDialog(kind);
   }
 
@@ -424,6 +537,10 @@ export default function App() {
     setNotice("Встреча завершена. Разбор сценария появится на следующем этапе.");
   }
 
+  if (new URLSearchParams(window.location.search).get("screen") !== "meeting") {
+    return <BriefScreen />;
+  }
+
   return (
     <main className="arena-shell">
       <header className="arena-header">
@@ -437,19 +554,7 @@ export default function App() {
           </div>
         </div>
 
-        <ol className="progress-track" aria-label="Этапы урока">
-          {progressSteps.map((step) => (
-            <li
-              key={step.number}
-              className={cn("progress-step", step.number === 3 && "active")}
-              aria-label={`${step.number}. ${step.label}`}
-              aria-current={step.number === 3 ? "step" : undefined}
-            >
-              <ProgressNumber number={step.number} />
-              <small aria-hidden="true">{step.label}</small>
-            </li>
-          ))}
-        </ol>
+        <ProgressTrack activeStep={3} />
 
         <div className="header-actions">
           <Button
@@ -790,9 +895,11 @@ export default function App() {
         aria-describedby="session-dialog-description"
         onCancel={(event) => {
           event.preventDefault();
+          if (activeDialog === "intro") return;
           dismissDialog();
         }}
         onClick={(event) => {
+          if (activeDialog === "intro") return;
           if (event.target !== event.currentTarget) return;
           const bounds = event.currentTarget.getBoundingClientRect();
           if (
@@ -803,32 +910,83 @@ export default function App() {
           }
         }}
       >
-        <h2 id="session-dialog-title">{currentDialog?.title}</h2>
-        <p id="session-dialog-description">{currentDialog?.description}</p>
-        <div className="session-dialog-actions">
-          <Button
-            type="button"
-            variant="outline"
-            className="dialog-secondary"
-            onClick={activeDialog === "hint" ? dismissDialog : finishSession}
-          >
-            {currentDialog?.secondary}
-          </Button>
-          <Button
-            type="button"
-            className="dialog-primary"
-            onClick={() => {
-              if (activeDialog === "hint") {
-                setHintVisible(true);
-                setBriefOpen(false);
-              }
-              dismissDialog();
-            }}
-          >
-            {currentDialog?.primary}
-            <ArrowRight aria-hidden="true" />
-          </Button>
-        </div>
+        {activeDialog === "intro" ? (
+          <div className="practice-intro-layout">
+            <div className="practice-intro-copy">
+              <h2 id="session-dialog-title">Как устроена практика</h2>
+              <ol className="practice-steps">
+                <li>
+                  <span>1</span>
+                  <div><strong>Прочитайте бриф</strong><small>Узнайте свою роль, задачу и доступные факты</small></div>
+                </li>
+                <li>
+                  <span>2</span>
+                  <div><strong>Поговорите с AI-контрагентом</strong><small>Отвечайте своими словами, голосом или текстом</small></div>
+                </li>
+                <li>
+                  <span>3</span>
+                  <div><strong>Получите разбор</strong><small>Посмотрите, что сработало и что можно улучшить</small></div>
+                </li>
+              </ol>
+              <p id="session-dialog-description" className="practice-dialog-description">
+                Готовых вариантов и текущего балла во время разговора нет.
+                Подсказка появляется только по вашему запросу и влияет лишь
+                на отметку самостоятельности.
+              </p>
+              <div className="session-dialog-actions">
+                <Button type="button" variant="outline" className="dialog-secondary" onClick={() => {}}>
+                  К уроку
+                </Button>
+                <Button type="button" className="dialog-primary" onClick={dismissDialog}>
+                  Начать практику
+                  <ArrowRight aria-hidden="true" />
+                </Button>
+              </div>
+            </div>
+            <div className="practice-intro-preview" aria-hidden="true">
+              <div className="practice-intro-avatar"><CounterpartyAvatar /></div>
+              <div className="practice-audio-preview">
+                <span className="practice-record-dot"><Mic size={17} /></span>
+                <div className="practice-waveform">
+                  {waveform.slice(0, 28).map((height, index) => (
+                    <i key={index} style={{ height: `${Math.max(18, height * 0.48)}%` }} />
+                  ))}
+                </div>
+                <span className="practice-audio-close"><X size={14} /></span>
+              </div>
+              <div className="practice-duration"><i />4 ситуации · около 3 минут · без баллов</div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <h2 id="session-dialog-title">{currentDialog?.title}</h2>
+            <p id="session-dialog-description">{currentDialog?.description}</p>
+            <div className="session-dialog-actions">
+              <Button
+                type="button"
+                variant="outline"
+                className="dialog-secondary"
+                onClick={activeDialog === "hint" ? dismissDialog : finishSession}
+              >
+                {currentDialog?.secondary}
+              </Button>
+              <Button
+                type="button"
+                className="dialog-primary"
+                onClick={() => {
+                  if (activeDialog === "hint") {
+                    setHintVisible(true);
+                    setBriefOpen(false);
+                  }
+                  dismissDialog();
+                }}
+              >
+                {currentDialog?.primary}
+                <ArrowRight aria-hidden="true" />
+              </Button>
+            </div>
+          </>
+        )}
       </dialog>
     </main>
   );
