@@ -1,12 +1,13 @@
 interface BrandLogoProps {
   className?: string;
+  viewBox?: string;
 }
 
-export function BrandLogo({ className }: BrandLogoProps) {
+export function BrandLogo({ className, viewBox = "0 0 100 100" }: BrandLogoProps) {
   return (
     <svg
       className={className}
-      viewBox="0 0 100 100"
+      viewBox={viewBox}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"

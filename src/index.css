@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Montserrat Alternates", ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
   font-family:
-    "Nunito Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Montserrat Alternates", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
   color: #d7e5fa;
   background: #181615;
@@ -63,41 +63,10 @@ button {
   background-size: 22px 22px;
 }
 
-.arena-header {
-  width: 100%;
-  height: 106px;
-  margin: 0 auto 20px;
-  display: grid;
-  grid-template-columns: 24% minmax(0, 1fr) 24%;
-  align-items: center;
-  gap: 16px;
+.meeting-screen {
+  font-family: "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
-.brand-block {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  flex: 0 0 48px;
-}
-
-.brand-logo {
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  filter: drop-shadow(0 0 13px rgba(255, 97, 74, 0.42));
-}
-
-.brand-block h1,
-.brand-block p,
 .panel-heading h2,
 .panel-heading p,
 .current-reply p,
@@ -106,122 +75,37 @@ button {
   margin: 0;
 }
 
-.brand-block h1 {
-  color: #dce8f9;
-  font-size: 18px;
-  line-height: 1.05;
-  font-weight: 700;
-}
-
-.brand-block p {
-  margin-top: 2px;
-  color: rgba(215, 229, 250, 0.73);
-  font-size: 9px;
-}
-
-.progress-track {
-  --progress-marker-y: 52px;
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  align-self: end;
-  width: min(360px, 100%);
-  min-height: 78px;
-  margin: 0 auto;
-  padding: 0;
-  list-style: none;
-}
-
-.progress-track::before {
-  content: "";
-  position: absolute;
-  top: var(--progress-marker-y);
-  left: 12.5%;
-  right: 12.5%;
-  height: 3px;
-  translate: 0 -50%;
-  border-radius: 999px;
-  background: #817b79;
-}
-
-.progress-step {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  justify-content: center;
-  justify-items: center;
-  color: #5f5957;
-}
-
 .progress-number {
   display: block;
-  width: 32px;
-  height: 40px;
+  width: 20px;
+  height: 28px;
+  background-color: currentColor;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
 }
 
-.progress-step::after {
-  content: "";
-  position: absolute;
-  top: calc(var(--progress-marker-y) - 6px);
-  left: 50%;
-  width: 12px;
-  height: 12px;
-  translate: -50% 0;
-  border: 3px solid #817b79;
-  background: #211f1e;
-  border-radius: 50%;
+.progress-number[data-number="one"] {
+  mask-image: url("/number/one.svg");
+  -webkit-mask-image: url("/number/one.svg");
 }
 
-.progress-step.active {
-  color: #ff6548;
+.progress-number[data-number="two"] {
+  mask-image: url("/number/two.svg");
+  -webkit-mask-image: url("/number/two.svg");
 }
 
-.progress-step.active::after {
-  top: calc(var(--progress-marker-y) - 7px);
-  width: 14px;
-  height: 14px;
-  border-color: #ff6548;
-  background: #ff6548;
-  box-shadow: 0 0 12px rgba(255, 101, 72, 0.62);
+.progress-number[data-number="three"] {
+  mask-image: url("/number/three.svg");
+  -webkit-mask-image: url("/number/three.svg");
 }
 
-.progress-step small {
-  position: absolute;
-  top: 63px;
-  color: #77706d;
-  font-size: 8px;
-  font-weight: 600;
-}
-
-.progress-step.active small {
-  color: #ff6548;
-}
-
-.header-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.header-actions button {
-  height: 38px;
-  padding-inline: 12px;
-  border-width: 2px;
-  border-color: #c9d8ef;
-  border-radius: 999px;
-  color: #d8e5f8;
-  background: rgba(27, 25, 24, 0.72);
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.header-actions .pause-action {
-  min-width: 79px;
-}
-
-.header-actions .finish-action {
-  width: 138px;
+.progress-number[data-number="four"] {
+  mask-image: url("/number/four.svg");
+  -webkit-mask-image: url("/number/four.svg");
 }
 
 .notice {
@@ -944,6 +828,14 @@ button {
   color: #d7e5fa;
 }
 
+.mentor-panel .mentor-level {
+  display: block;
+  margin-top: 4px;
+  padding-top: 0;
+  color: #ff6548;
+  font-weight: 800;
+}
+
 .session-dialog {
   width: min(920px, calc(100% - 32px));
   max-height: calc(100dvh - 32px);
@@ -1049,25 +941,17 @@ button {
 }
 
 .brief-screen {
+  font-family: "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
   padding-right: 6.25%;
   padding-bottom: 3.5dvh;
 }
 
-.brief-exit {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 176px;
-  height: 38px;
-  padding: 0 16px;
-  border: 2px solid #c9d8ef;
-  border-radius: 999px;
-  color: #d8e5f8;
-  background: rgba(27, 25, 24, 0.72);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1;
-  white-space: nowrap;
+.brief-screen h1,
+.brief-screen h2,
+.brief-screen h3,
+.brief-screen h4,
+.brief-screen-kicker {
+  font-family: "Montserrat Alternates", ui-sans-serif, system-ui, sans-serif;
 }
 
 .brief-screen-overview,
@@ -1391,19 +1275,6 @@ button {
     padding-right: 6.25%;
   }
 
-  .arena-header {
-    height: auto;
-    grid-template-columns: 1fr auto;
-    row-gap: 14px;
-  }
-
-  .progress-track {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    width: min(620px, 100%);
-    margin: 0 auto;
-  }
-
   .arena-grid {
     height: 100%;
     overflow-y: auto;
@@ -1462,7 +1333,6 @@ button {
     overflow: hidden;
   }
 
-  .arena-header,
   .arena-grid,
   .brief-column {
     display: flex;
@@ -1485,34 +1355,12 @@ button {
     min-height: max-content;
   }
 
-  .arena-header {
-    height: auto;
-    gap: 18px;
-  }
-
   .arena-grid {
     height: 100%;
   }
 
   .brief-column {
     flex-shrink: 0;
-  }
-
-  .brand-block {
-    align-self: flex-start;
-  }
-
-  .header-actions {
-    width: 100%;
-    justify-content: stretch;
-  }
-
-  .header-actions button {
-    flex: 1;
-  }
-
-  .progress-track {
-    order: 3;
   }
 
   .conversation-panel {
@@ -1569,24 +1417,9 @@ button {
     padding-left: 4px;
   }
 
-  .brand-mark {
-    width: 44px;
-    height: 44px;
-    flex-basis: 44px;
-  }
-
   .progress-number {
-    width: 28px;
-    height: 34px;
-  }
-
-  .progress-track {
-    --progress-marker-y: 44px;
-    min-height: 68px;
-  }
-
-  .progress-step small {
-    top: 54px;
+    width: 20px;
+    height: 28px;
   }
 
   .voice-composer {
@@ -1608,18 +1441,7 @@ button {
 }
 
 @media (min-width: 1500px) {
-  .arena-header { height: clamp(100px, 13dvh, 187px); margin-bottom: 2.5dvh; }
-  .brand-block { gap: 14px; }
-  .brand-mark { width: 68px; height: 68px; flex-basis: 68px; }
-  .brand-block h1 { font-size: 26px; }
-  .brand-block p { margin-top: 4px; font-size: 12px; }
-  .progress-track { width: min(570px, 100%); min-height: 104px; --progress-marker-y: 72px; }
-  .progress-number { width: 48px; height: 60px; }
-  .progress-step small { top: 88px; font-size: 12px; }
-  .header-actions { gap: 16px; }
-  .header-actions button { height: 60px; font-size: 24px; padding-inline: 20px; }
-  .header-actions .pause-action { min-width: 124px; }
-  .header-actions .finish-action { width: 216px; }
+  .progress-number { width: 20px; height: 28px; margin-top: 8px; }
   .arena-grid { gap: 24px; }
   .conversation-panel { padding: 28px 30px; }
   .panel-heading h2 { font-size: 23px; }
@@ -1669,7 +1491,6 @@ button {
   .mentor-options { margin-top: 34px; gap: 18px; }
   .mentor-options label { gap: 14px; font-size: 15px; }
   .mentor-panel small { padding-top: 30px; font-size: 11px; }
-  .brief-exit { min-width: 280px; height: 60px; padding-inline: 20px; font-size: 24px; }
   .brief-screen-grid { gap: 24px; }
   .brief-screen-overview { gap: 19px; padding: 30px; border-radius: 22px; }
   .brief-screen-kicker { font-size: 14px; }
@@ -1699,16 +1520,7 @@ button {
 }
 
 @media (min-width: 2300px) {
-  .brand-mark { width: 90px; height: 90px; flex-basis: 90px; }
-  .brand-block { gap: 19px; }
-  .brand-block h1 { font-size: 34px; }
-  .brand-block p { font-size: 16px; }
-  .progress-track { width: min(760px, 100%); min-height: 139px; --progress-marker-y: 96px; }
-  .progress-number { width: 64px; height: 80px; }
-  .progress-step small { top: 117px; font-size: 16px; }
-  .header-actions button { height: 80px; font-size: 32px; padding-inline: 27px; }
-  .header-actions .pause-action { min-width: 165px; }
-  .header-actions .finish-action { width: 288px; }
+  .progress-number { width: 20px; height: 28px; }
   .arena-grid { gap: 32px; }
   .conversation-panel { padding: 37px 40px; }
   .panel-heading h2 { font-size: 31px; }
@@ -1746,7 +1558,6 @@ button {
   .mentor-options { margin-top: 45px; gap: 24px; }
   .mentor-options label { font-size: 20px; }
   .mentor-panel small { font-size: 15px; }
-  .brief-exit { min-width: 370px; height: 80px; padding-inline: 27px; font-size: 32px; }
   .brief-screen-grid { gap: 32px; }
   .brief-screen-overview { gap: 24px; padding: 37px; border-radius: 32px; }
   .brief-screen-kicker { font-size: 14px; }
@@ -1838,31 +1649,41 @@ button {
 }
 
 .intro-dialog {
-  width: min(840px, calc(100% - 32px));
-  padding: 32px;
-  border-radius: 18px;
+  width: min(1320px, calc(100vw - 32px));
+  height: min(690px, calc(100dvh - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 52px 56px 56px;
+  border-radius: 20px;
 }
 
 .practice-intro-layout {
+  height: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(230px, 0.85fr);
+  grid-template-columns: minmax(0, 680px) minmax(0, 1fr);
   align-items: center;
-  gap: 24px;
+  gap: 14px;
 }
 
 .practice-intro-copy {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
 }
 
 .practice-intro-copy h2 {
-  font-size: 36px;
+  font-family: "Montserrat Alternates", ui-sans-serif, system-ui, sans-serif;
+  width: max-content;
+  max-width: calc(100vw - 48px);
+  font-size: 56px;
   line-height: 1.1;
+  white-space: nowrap;
 }
 
 .practice-steps {
   display: grid;
-  gap: 8px;
-  margin: 20px 0 0;
+  gap: 42px;
+  margin: 41px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -1870,26 +1691,30 @@ button {
 .practice-steps li {
   position: relative;
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: 53px minmax(0, 1fr);
+  gap: 16px;
   min-width: 0;
 }
 
 .practice-steps li:not(:last-child)::after {
   content: "";
   position: absolute;
-  top: 28px;
-  bottom: -8px;
-  left: 11px;
+  top: 56px;
+  bottom: -34px;
+  left: 18px;
   width: 2px;
   background: #c9d8ef;
   opacity: 0.72;
 }
 
-.practice-steps li > span {
-  color: #cfe0f7;
-  font-size: 28px;
-  line-height: 1;
+.practice-steps .progress-number {
+  display: block;
+  width: 53px;
+  height: 52px;
+  margin-top: 2px;
+  mask-position: left center;
+  -webkit-mask-position: left center;
+  background-color: #cfe0f7;
 }
 
 .practice-steps li > div {
@@ -1903,58 +1728,87 @@ button {
 }
 
 .practice-steps strong {
-  font-size: 16px;
+  font-family: "Montserrat Alternates", ui-sans-serif, system-ui, sans-serif;
+  font-size: 28px;
   line-height: 1.25;
 }
 
 .practice-steps small {
-  margin-top: 2px;
+  margin-top: 3px;
   color: rgba(215, 229, 250, 0.9);
-  font-size: 10px;
-  line-height: 1.3;
+  font-size: 14px;
+  line-height: 1.4;
 }
 
 .practice-dialog-description {
-  margin: 18px 0 0;
-  font-size: 12px;
+  max-width: 600px;
+  margin: auto 0 0;
+  font-size: 18px;
   line-height: 1.45;
 }
 
 .intro-dialog .session-dialog-actions {
   justify-content: flex-start;
-  gap: 14px;
-  margin-top: 16px;
+  gap: 30px;
+  margin-top: 33px;
 }
 
 .intro-dialog .session-dialog-actions button {
-  min-height: 42px;
-  padding: 7px 16px;
-  font-size: 15px;
+  min-height: 60px;
+  padding: 10px 24px;
+  border-radius: 999px;
+  font-size: 24px;
+  font-family: "Montserrat Alternates", ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.2;
+  transition: box-shadow 180ms ease, filter 180ms ease, background-color 180ms ease;
 }
 
 .intro-dialog .dialog-secondary {
-  min-width: 122px;
+  min-width: 250px;
+  border: 2px solid #cfe0f7;
+  color: #cfe0f7;
+  background: transparent;
+  box-shadow: none;
 }
 
 .intro-dialog .session-dialog-actions .dialog-primary {
-  min-width: 198px;
-  gap: 12px;
+  min-width: 400px;
+  gap: 24px;
+  justify-content: space-between;
+  border: 2px solid #cfe0f7;
+  color: #534e4d;
+  background: #ff6548;
+  box-shadow: 0 0 8px rgba(207, 224, 247, 0.9), 0 0 14px rgba(255, 101, 72, 0.38);
 }
 
 .intro-dialog .dialog-primary svg {
-  width: 25px;
-  height: 25px;
+  width: 36px;
+  height: 36px;
+  color: #534e4d;
+}
+
+.intro-dialog .dialog-primary:hover,
+.intro-dialog .dialog-primary:focus-visible {
+  filter: brightness(1.06);
+  box-shadow: 0 0 12px rgba(207, 224, 247, 1), 0 0 24px rgba(255, 101, 72, 0.68);
+}
+
+.intro-dialog .dialog-secondary:hover,
+.intro-dialog .dialog-secondary:focus-visible {
+  box-shadow: 0 0 10px rgba(207, 224, 247, 0.72), 0 0 20px rgba(255, 101, 72, 0.45);
 }
 
 .practice-intro-preview {
   min-width: 0;
+  width: min(100%, 477px);
   display: grid;
+  justify-self: start;
   justify-items: center;
-  gap: 14px;
+  gap: 18px;
 }
 
 .practice-intro-avatar {
-  width: clamp(108px, 12vw, 148px);
+  width: clamp(180px, 18vw, 245px);
   aspect-ratio: 1;
   overflow: hidden;
   border-radius: 50%;
@@ -1969,9 +1823,10 @@ button {
 }
 
 .practice-audio-preview {
+  position: relative;
   width: 100%;
-  min-height: 42px;
-  padding: 6px;
+  min-height: 60px;
+  padding: 8px 10px;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -1982,9 +1837,9 @@ button {
 
 .practice-record-dot,
 .practice-audio-close {
-  width: 25px;
-  height: 25px;
-  flex: 0 0 25px;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
   display: grid;
   place-items: center;
   border-radius: 50%;
@@ -1993,25 +1848,49 @@ button {
 }
 
 .practice-record-dot svg {
-  width: 15px;
-  height: 15px;
+  width: 34px;
+  height: 34px;
+}
+
+.practice-record-dot {
+  background: transparent;
+  filter: drop-shadow(0 0 6px rgba(255, 101, 72, 0.6));
+}
+
+.practice-audio-time {
+  position: absolute;
+  top: 6px;
+  left: 67px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #cfe0f7;
+  font-size: 8px;
+  line-height: 1;
+}
+
+.practice-audio-time i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ff6548;
 }
 
 .practice-waveform {
-  height: 24px;
+  height: 36px;
   min-width: 0;
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 6px;
   overflow: hidden;
 }
 
 .practice-waveform i {
-  width: 3px;
-  max-height: 22px;
-  flex: 0 0 3px;
+  width: 4px;
+  max-height: 30px;
+  flex: 0 0 4px;
   border-radius: 3px;
   background: #cfe0f7;
 }
@@ -2021,56 +1900,133 @@ button {
 }
 
 .practice-audio-close {
-  width: 22px;
-  height: 22px;
-  flex-basis: 22px;
+  width: 30px;
+  height: 30px;
+  flex-basis: 30px;
   background: #534e4d;
   color: #ff6548;
 }
 
 .practice-duration {
-  min-height: 25px;
-  padding: 0 12px;
+  min-height: 38px;
+  padding: 0 20px;
   display: inline-flex;
   align-items: center;
   gap: 7px;
   border-radius: 999px;
   color: #d7e5fa;
   background: #211f1e;
-  font-size: 9px;
+  font-size: 14px;
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .practice-duration i {
-  width: 7px;
-  height: 7px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: #ff6548;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 1200px) {
   .intro-dialog {
+    width: calc(100vw - 24px);
+    height: auto;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    padding: 32px;
+  }
+
+  .practice-intro-layout {
+    height: auto;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .practice-intro-copy h2 {
+    width: auto;
+    max-width: 100%;
+    font-size: clamp(36px, 5.4vw, 56px);
+    white-space: normal;
+  }
+
+  .practice-dialog-description { margin-top: 28px; }
+
+  .practice-intro-preview {
+    width: 100%;
+    grid-template-columns: 96px minmax(0, 1fr);
+    align-items: center;
+    justify-items: stretch;
+    gap: 8px 16px;
+  }
+
+  .practice-intro-avatar { width: 96px; grid-row: span 2; }
+  .practice-duration { justify-self: start; }
+}
+
+@media (max-width: 900px) {
+  .intro-dialog {
+    width: calc(100vw - 24px);
+    height: auto;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
     padding: 24px 20px;
+    border-radius: 22px;
   }
 
   .practice-intro-layout {
     grid-template-columns: minmax(0, 1fr);
-    gap: 18px;
+    gap: 22px;
+    height: auto;
   }
 
   .practice-intro-copy h2 {
-    font-size: 30px;
+    font-size: clamp(30px, 8vw, 40px);
+  }
+
+  .practice-steps {
+    gap: 16px;
+    margin-top: 22px;
+  }
+
+  .practice-steps li {
+    grid-template-columns: 20px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .practice-steps .progress-number {
+    width: 20px;
+    height: 28px;
+  }
+
+  .practice-steps li:not(:last-child)::after {
+    top: 28px;
+    bottom: -16px;
+    left: 9px;
+  }
+
+  .practice-steps strong {
+    font-size: 20px;
+  }
+
+  .practice-steps small {
+    font-size: 12px;
+  }
+
+  .practice-dialog-description {
+    margin-top: 22px;
+    font-size: 16px;
   }
 
   .practice-intro-preview {
-    grid-template-columns: 64px minmax(0, 1fr);
+    grid-template-columns: clamp(64px, 10vw, 96px) minmax(0, 1fr);
     justify-items: stretch;
     align-items: center;
     gap: 8px 12px;
   }
 
   .practice-intro-avatar {
-    width: 64px;
+    width: 100%;
     grid-row: span 2;
   }
 
@@ -2080,17 +2036,32 @@ button {
 
   .practice-duration {
     justify-self: start;
-    font-size: 8px;
+    font-size: 9px;
   }
 
   .intro-dialog .session-dialog-actions {
-    flex-direction: column-reverse;
-    gap: 10px;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
   }
 
   .intro-dialog .session-dialog-actions button {
     width: 100%;
-    font-size: 16px;
+    min-width: 0;
+    min-height: 56px;
+    padding-inline: 16px;
+    font-size: clamp(16px, 5vw, 20px);
+  }
+
+  .intro-dialog .session-dialog-actions .dialog-primary {
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .intro-dialog .dialog-primary svg {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
   }
 }
 
@@ -2108,94 +2079,9 @@ button {
   --practice-step-gap: 16px;
   --practice-steps-offset: 52px;
   --practice-notched-radius: 12px;
-  grid-template-rows: auto auto;
   align-content: start;
-  gap: 30px;
-  padding-top: 30px;
-  padding-bottom: 48px;
-  overflow-y: auto;
-  font-family: "Montserrat Alternates", ui-sans-serif, system-ui, sans-serif;
-  color: #cddff8;
-  background-color: #22201e;
-  background-image: radial-gradient(
-    circle at 6px 6px,
-    transparent 0 3px,
-    rgba(213, 226, 245, 0.065) 3.5px 4.7px,
-    transparent 5.3px
-  );
-  background-size: 15px 15px;
-}
-
-.practice-gateway-screen .arena-header {
-  height: 80px;
-  margin: 0;
-  grid-template-columns: minmax(0, 1fr) minmax(250px, 1.15fr) minmax(0, 1fr);
-  align-items: start;
-}
-
-.practice-gateway-screen .brand-mark {
-  width: 44px;
-  height: 44px;
-  flex-basis: 44px;
-}
-
-.practice-gateway-screen .brand-block {
-  gap: 16px;
-}
-
-.practice-gateway-screen .brand-logo {
-  width: 123%;
-  height: 123%;
-  max-width: none;
-}
-
-.practice-gateway-screen .brand-block h1 {
-  font-size: 17px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.practice-gateway-screen .brand-block p {
-  font-size: 8px;
-}
-
-.practice-gateway-screen .brief-exit {
-  min-width: 186px;
-  height: 40px;
-  font-size: 16px;
-}
-
-.practice-gateway-screen .progress-track {
-  --progress-marker-y: 41px;
-  width: 360px;
-  max-width: 100%;
-  min-height: 64px;
-  align-self: end;
-}
-
-.practice-gateway-screen .progress-number {
-  width: 28px;
-  height: 34px;
-}
-
-.practice-gateway-screen .progress-step small {
-  top: 50px;
-  font-size: 9px;
-}
-
-.practice-gateway-screen .progress-step::after {
-  top: calc(var(--progress-marker-y) - 4px);
-  width: 8px;
-  height: 8px;
-  border-width: 2px;
-}
-
-.practice-gateway-screen .progress-step:first-child::after {
-  background: #817b79;
-}
-
-.practice-gateway-screen .progress-track::before {
-  height: 2px;
+  gap: 0;
+  padding-bottom: 3.5dvh;
 }
 
 .practice-gateway-grid {
@@ -2203,6 +2089,7 @@ button {
   min-width: 0;
   align-self: start;
   margin-inline: auto;
+  margin-top: 8px;
   display: grid;
   grid-template-columns: minmax(0, 1.69fr) minmax(0, 1fr);
   align-items: stretch;
@@ -2221,14 +2108,14 @@ button {
   align-items: flex-start;
   overflow: hidden;
   border-radius: 24px;
-  color: #cddff8;
-  background: #544c4c;
+  color: #d7e5fa;
+  background: #534e4d;
 }
 
 .practice-gateway-kicker {
   position: relative;
   z-index: 1;
-  color: #ff6547;
+  color: #ff6548;
   font-size: var(--practice-kicker-size);
   font-weight: 700;
   line-height: 1.2;
@@ -2289,12 +2176,8 @@ button {
   height: var(--practice-number-height);
 }
 
-.practice-gateway-steps .progress-number path {
-  stroke-width: 4.4;
-}
-
 .practice-gateway-steps li.active {
-  color: #ff6547;
+  color: #ff6548;
 }
 
 .practice-gateway-steps li > div {
@@ -2380,7 +2263,7 @@ button {
 }
 
 .practice-concept {
-  --ticket-background: #f2e5cd;
+  --ticket-background: #efe4c7;
   position: relative;
   min-width: 0;
   min-height: 0;
@@ -2388,7 +2271,7 @@ button {
   display: grid;
   grid-template-rows: 33% minmax(0, 1fr);
   border-radius: 20px;
-  color: #544c4c;
+  color: #534e4d;
   background: var(--ticket-background);
   text-align: center;
   mask-image:
@@ -2410,7 +2293,7 @@ button {
 .practice-concept > span {
   position: absolute;
   inset: 33% 8% auto;
-  border-top: 4.5px dotted #22201e;
+  border-top: 4.5px dotted #1b1918;
 }
 
 .practice-concept p {
@@ -2430,7 +2313,7 @@ button {
 }
 
 .practice-concept.check {
-  --ticket-background: #cddff8;
+  --ticket-background: #cfe0f7;
   grid-row: 5;
 }
 
@@ -2449,16 +2332,8 @@ button {
     --practice-step-gap: 19px;
     --practice-steps-offset: 62px;
     --practice-notched-radius: 14px;
-    padding-top: 35px;
-    gap: 36px;
   }
 
-  .practice-gateway-screen .arena-header { height: 91px; }
-  .practice-gateway-screen .brand-mark { width: 52px; height: 52px; flex-basis: 52px; }
-  .practice-gateway-screen .brand-block h1 { font-size: 20px; }
-  .practice-gateway-screen .brand-block p { font-size: 9px; }
-  .practice-gateway-screen .brief-exit { min-width: 222px; height: 48px; font-size: 19px; }
-  .practice-gateway-screen .progress-track { width: 425px; }
   .practice-gateway-card h2 { margin-top: 10px; }
   .practice-gateway-lead { margin-top: 6px; }
   .practice-gateway-steps li { column-gap: 20px; }
@@ -2475,31 +2350,29 @@ button {
     --practice-ticket-title-size: 32px;
     --practice-copy-size: 24px;
     --practice-action-size: 24px;
-    --practice-number-width: 54px;
-    --practice-number-height: 57px;
-    --practice-step-gap: 27px;
+    --practice-number-width: 48px;
+    --practice-number-height: 50px;
+    --practice-step-gap: 34px;
     --practice-steps-offset: 78px;
     --practice-notched-radius: 18px;
-    padding-top: 45px;
-    gap: 45px;
-    background-size: 22px 22px;
   }
 
-  .practice-gateway-screen .arena-header { height: 120px; }
-  .practice-gateway-screen .brand-mark { width: 66px; height: 66px; flex-basis: 66px; }
-  .practice-gateway-screen .brand-block { gap: 24px; }
-  .practice-gateway-screen .brand-block h1 { font-size: 26px; }
-  .practice-gateway-screen .brand-block p { font-size: 12px; }
-  .practice-gateway-screen .brief-exit { min-width: 280px; height: 60px; font-size: 24px; }
-  .practice-gateway-screen .progress-track { --progress-marker-y: 60px; width: 540px; min-height: 96px; }
-  .practice-gateway-screen .progress-number { width: 42px; height: 51px; }
-  .practice-gateway-screen .progress-step small { top: 75px; font-size: 13px; }
   .practice-gateway-card h2 { margin-top: 12px; }
   .practice-gateway-lead { margin-top: 8px; }
-  .practice-gateway-steps { margin-left: -18px; }
-  .practice-gateway-steps li { column-gap: 27px; }
-  .practice-gateway-steps li > .progress-number { width: var(--practice-number-width); height: var(--practice-number-height); }
-  .practice-gateway-steps li:not(:last-child)::after { left: 33px; bottom: -18px; }
+  .practice-gateway-steps { margin-left: -10px; }
+  .practice-gateway-steps li { column-gap: 33px; }
+  .practice-gateway-steps li > .progress-number {
+    width: var(--practice-number-width);
+    height: var(--practice-number-height);
+    margin-top: 2px;
+    mask-size: 35px 47px;
+    mask-position: center top;
+    -webkit-mask-size: 35px 47px;
+    -webkit-mask-position: center top;
+  }
+  .practice-gateway-steps li:first-child > .progress-number { translate: -5px 0; }
+  .practice-gateway-steps li:not(:first-child) > .progress-number { translate: 3px 0; }
+  .practice-gateway-steps li:not(:last-child)::after { top: calc(var(--practice-number-height) + 9px); left: 30px; bottom: -28px; }
   .practice-gateway-action { padding-inline: 30px; }
   .practice-gateway-action svg { width: 62px; height: 32px; }
   .practice-concept > span { border-top-width: 6px; }
@@ -2516,10 +2389,6 @@ button {
     --practice-step-gap: 10px;
   }
 
-  .practice-gateway-screen .brand-block h1 { font-size: 14px; }
-  .practice-gateway-screen .brand-block p { font-size: 7px; }
-  .practice-gateway-screen .brand-block { gap: 8px; }
-  .practice-gateway-screen .brief-exit { min-width: 150px; font-size: 13px; }
   .practice-gateway-steps { width: 70%; }
   .practice-gateway-action { min-height: 36px; padding-inline: 12px; }
 }
@@ -2532,20 +2401,7 @@ button {
     --practice-caption-size: 12px;
     --practice-copy-size: 16px;
     --practice-steps-offset: 36px;
-    gap: 24px;
-    padding: 24px;
-  }
-
-  .practice-gateway-screen .arena-header {
-    height: auto;
-    grid-template-columns: minmax(0, 1fr) auto;
-    row-gap: 20px;
-  }
-
-  .practice-gateway-screen .progress-track {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    justify-self: center;
+    gap: 0;
   }
 
   .practice-gateway-grid {
@@ -2575,6 +2431,11 @@ button {
     grid-row: auto;
   }
 
+  .practice-concept.interest,
+  .practice-concept.check {
+    grid-row: auto;
+  }
+
   .practice-concept h3 { padding-inline: 12px; }
   .practice-concept p { padding-inline: 14px; }
 }
@@ -2585,20 +2446,6 @@ button {
     --practice-lead-size: 15px;
     --practice-step-size: 20px;
     --practice-steps-offset: 30px;
-    padding: 20px 16px 32px;
-  }
-
-  .practice-gateway-screen .arena-header {
-    grid-template-columns: minmax(0, 1fr);
-    justify-items: start;
-    gap: 18px;
-  }
-
-  .practice-gateway-screen .progress-track {
-    grid-column: 1;
-    grid-row: 3;
-    justify-self: center;
-    width: min(100%, 360px);
   }
 
   .practice-gateway-card { min-height: 450px; padding: 26px 24px; }
@@ -2614,4 +2461,60 @@ button {
   }
 
   .practice-concept { min-height: 140px; }
+}
+
+@media (max-width: 900px) {
+  .practice-gateway-screen {
+    height: 100dvh;
+    min-height: 100dvh;
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: hidden;
+    padding-bottom: 28px;
+  }
+
+  .practice-gateway-grid {
+    align-self: stretch;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+@media (max-width: 820px) {
+  .practice-gateway-screen {
+    padding-inline: 14px;
+  }
+}
+
+.practice-intro-overview {
+  height: 100%;
+}
+
+.practice-intro-lead p {
+  font-weight: 600;
+}
+
+.practice-intro-step-section {
+  gap: 12px;
+}
+
+.practice-intro-steps {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.practice-intro-step-icon .progress-number {
+  width: 20px;
+  height: 28px;
+}
+
+.practice-intro-steps li:last-child .practice-intro-step-icon {
+  background: #cfe0f7;
+}
+
+.practice-intro-actions {
+  grid-template-columns: minmax(0, 1fr);
 }
