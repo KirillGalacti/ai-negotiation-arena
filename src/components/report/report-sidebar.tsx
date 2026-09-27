@@ -1,12 +1,12 @@
 import { BrandLogo } from "@/components/brand-logo";
 
 const sections: Array<{ label: string; image: string; active?: boolean }> = [
-  { label: "Обзор", image: "overview" },
-  { label: "Обучение", image: "learning", active: true },
-  { label: "Практика", image: "practice" },
-  { label: "Прогресс", image: "progress" },
+  { label: "Обзор", image: "home" },
+  { label: "Обучение", image: "mentor", active: true },
+  { label: "Практика", image: "negotiations" },
+  { label: "Прогресс", image: "skills" },
   { label: "Тренировки", image: "training" },
-  { label: "Достижения", image: "achievements" },
+  { label: "Достижения", image: "history" },
 ];
 
 export function ReportSidebar() {
@@ -25,7 +25,7 @@ export function ReportSidebar() {
             aria-current={active ? "page" : undefined}
             key={label}
           >
-            <img src={`/report-sidebar/${image}.png`} alt="" draggable="false" />
+            <img src={`/icons/${image}.svg`} alt="" draggable="false" />
           </button>
         ))}
       </nav>
@@ -34,7 +34,7 @@ export function ReportSidebar() {
           <img src="/report-sidebar/profile.png" alt="" draggable="false" />
         </button>
         <button className="report-sidebar-settings" type="button" title="Настройки" aria-label="Настройки">
-          <img src="/report-sidebar/settings.png" alt="" draggable="false" />
+          <img src="/icons/settings.svg" alt="" draggable="false" />
         </button>
       </div>
     </aside>

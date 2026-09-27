@@ -14,7 +14,7 @@ export function ArenaHeader({ activeStep, actions }: ArenaHeaderProps) {
     <header className="arena-header">
       <div className="brand-block">
         <div className="brand-mark" aria-hidden="true">
-          <BrandLogo className="brand-logo" viewBox="13 10 81 81" />
+          <BrandLogo className="brand-logo" />
         </div>
         <div className="brand-copy">
           <h1>Позиции и интересы</h1>

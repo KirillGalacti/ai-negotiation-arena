@@ -73,7 +73,7 @@ export function SessionDialog({ activeDialog, onDismiss, onFinish, onRevealHint 
           <div className="practice-intro-preview" aria-hidden="true">
             <div className="practice-intro-avatar"><CounterpartyAvatar /></div>
             <div className="practice-audio-preview">
-              <span className="practice-record-dot"><BrandLogo viewBox="13 10 81 81" /></span>
+              <span className="practice-record-dot"><BrandLogo /></span>
               <span className="practice-audio-time"><i />00:07</span>
               <div className="practice-waveform">
                 {waveform.map((height, index) => (

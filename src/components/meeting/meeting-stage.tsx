@@ -1,5 +1,5 @@
 import type { Dispatch, FormEventHandler, RefObject, SetStateAction } from "react";
-import { Mic, Send, Square, UserRound } from "lucide-react";
+import { Send, Square, UserRound } from "lucide-react";
 import { CounterpartyAvatar } from "@/components/counterparty-avatar";
 import { Button } from "@/components/ui/button";
 import { waveform } from "@/data/lesson";
@@ -86,7 +86,7 @@ export function MeetingStage({
               aria-label={isRecording ? "Остановить запись" : "Начать запись"}
               aria-pressed={isRecording}
             >
-              {isRecording ? <Square size={23} /> : <Mic size={28} />}
+              {isRecording ? <Square size={23} /> : <img src="/icons/microphone.svg" alt="" />}
             </button>
 
             {isRecording ? (

@@ -1,4 +1,4 @@
-import { ChevronDown, Lightbulb } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import type { HintLevel } from "@/types/reporting";
@@ -86,7 +86,7 @@ export function BriefSidebar({ briefOpen, onToggleBrief, hintVisible, hintLevel 
 
       <section className="mentor-panel" hidden={briefOpen}>
         <div className="mentor-title">
-          <Lightbulb size={28} />
+          <img src="/icons/mentor.svg" alt="" />
           <h2>Наставник</h2>
         </div>
         <p className={cn(hintVisible && "mentor-hint")} aria-live="polite">

@@ -1,4 +1,4 @@
-import { ArrowRight, Lightbulb, Mic, Pause, UserRound } from "lucide-react";
+import { ArrowRight, UserRound } from "lucide-react";
 import { ArenaHeader } from "@/components/arena-header";
 import { Button } from "@/components/ui/button";
 
@@ -47,15 +47,15 @@ export function BriefScreen() {
           <article className="brief-screen-how" aria-label="Как проходит встреча">
             <h2>Как проходит встреча</h2>
             <div className="brief-screen-how-row">
-              <span className="brief-screen-how-icon"><Mic aria-hidden="true" /></span>
+              <span className="brief-screen-how-icon"><img src="/icons/microphone.svg" alt="" /></span>
               <div><h3>Голос или текст</h3><p>Переключайтесь в любой момент. Распознанную речь можно исправить до отправки.</p></div>
             </div>
             <div className="brief-screen-how-row">
-              <span className="brief-screen-how-icon"><Lightbulb aria-hidden="true" /></span>
+              <span className="brief-screen-how-icon"><img src="/icons/mentor.svg" alt="" /></span>
               <div><h3>Подсказка — только по запросу</h3><p>Наставник подскажет в три шага и сам в разговор не вмешивается.</p></div>
             </div>
             <div className="brief-screen-how-row">
-              <span className="brief-screen-how-icon brief-screen-pause-icon"><Pause aria-hidden="true" /></span>
+              <span className="brief-screen-how-icon brief-screen-pause-icon"><img src="/icons/pause.svg" alt="" /></span>
               <div><h3>Пауза и завершение</h3><p>На паузе директор ждёт. Завершить встречу можно с подтверждением.</p></div>
             </div>
           </article>
