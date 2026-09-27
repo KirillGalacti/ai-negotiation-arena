@@ -95,6 +95,83 @@ function ProgressTrack({ activeStep }: { activeStep: number }) {
   );
 }
 
+function PracticeVisual() {
+  return (
+    <div className="practice-gateway-visual" aria-hidden="true">
+      <img src="/practice-art.svg" width="288" height="523" alt="" />
+    </div>
+  );
+}
+
+function PracticeIntroScreen() {
+  return (
+    <main className="arena-shell practice-gateway-screen">
+      <header className="arena-header">
+        <div className="brand-block">
+          <div className="brand-mark" aria-hidden="true">
+            <BrandLogo className="brand-logo" />
+          </div>
+          <div>
+            <h1>Позиции и интересы</h1>
+            <p>Блок 3 · Урок 2 · Пилот изменений на заводе</p>
+          </div>
+        </div>
+        <ProgressTrack activeStep={0} />
+        <div className="header-actions">
+          <span className="brief-exit" aria-hidden="true">Выйти из урока</span>
+        </div>
+      </header>
+
+      <section className="practice-gateway-grid" aria-label="Введение в бриф">
+        <article className="practice-gateway-card">
+          <span className="practice-gateway-kicker">БЛОК 3 · УРОК 2</span>
+          <h2>Практика</h2>
+          <p className="practice-gateway-lead">Применить полученные знания в реальном кейсе</p>
+
+          <ol className="practice-gateway-steps">
+            <li className="active" aria-label="1. Бриф">
+              <ProgressNumber number={1} />
+              <div><strong>Бриф</strong><small>роль, ситуация и ваша задача</small></div>
+            </li>
+            <li aria-label="2. Встреча">
+              <ProgressNumber number={2} />
+              <div><strong>Встреча</strong><small>разговор с директором завода голосом или текстом</small></div>
+            </li>
+            <li aria-label="3. Разбор">
+              <ProgressNumber number={3} />
+              <div><strong>Разбор</strong><small>короткий отчёт и переигрывание момента</small></div>
+            </li>
+          </ol>
+
+          <Button type="button" className="practice-gateway-action">
+            К практике
+            <ArrowRight aria-hidden="true" strokeWidth={1.2} preserveAspectRatio="none" />
+          </Button>
+          <PracticeVisual />
+        </article>
+
+        <div className="practice-concepts" aria-label="Описание практики">
+          <article className="practice-concept position">
+            <h3>Позиция</h3>
+            <span aria-hidden="true" />
+            <p>заявленное требование</p>
+          </article>
+          <article className="practice-concept interest">
+            <h3>Интерес</h3>
+            <span aria-hidden="true" />
+            <p>то, что человек защищает</p>
+          </article>
+          <article className="practice-concept check">
+            <h3>Проверка</h3>
+            <span aria-hidden="true" />
+            <p>вопрос «верно ли я понял?»</p>
+          </article>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 function BriefScreen() {
   return (
     <main className="arena-shell brief-screen">
@@ -537,8 +614,9 @@ export default function App() {
     setNotice("Встреча завершена. Разбор сценария появится на следующем этапе.");
   }
 
-  if (new URLSearchParams(window.location.search).get("screen") !== "meeting") {
-    return <BriefScreen />;
+  const screen = new URLSearchParams(window.location.search).get("screen");
+  if (screen !== "meeting") {
+    return screen === "brief" ? <BriefScreen /> : <PracticeIntroScreen />;
   }
 
   return (
