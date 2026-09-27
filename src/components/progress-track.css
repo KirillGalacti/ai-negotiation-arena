@@ -52,8 +52,10 @@
   background: #22201e;
 }
 
-.progress-step:first-child { color: #8b8484; }
+.progress-step.completed { color: #8b8484; }
 .progress-step.completed::after { background: #8b8484; }
+.progress-step.completed .progress-number[data-number="one"] { background: center / contain no-repeat url("/number/one-active.svg"); mask-image: none; -webkit-mask-image: none; }
+.progress-step.completed .progress-number[data-number="two"] { background: center / contain no-repeat url("/number/two-active.svg"); mask-image: none; -webkit-mask-image: none; }
 
 .progress-step small {
   position: absolute;

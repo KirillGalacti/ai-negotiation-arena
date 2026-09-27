@@ -1,5 +1,4 @@
 import { ChevronDown } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import type { HintLevel } from "@/types/reporting";
 
@@ -7,16 +6,23 @@ interface BriefSidebarProps {
   briefOpen: boolean;
   onToggleBrief: () => void;
   hintVisible: boolean;
+  hintsAvailable: boolean;
   hintLevel: HintLevel | null;
+  hintText: string;
+  inputMode: "voice" | "text";
+  onCloseHint: () => void;
+  onCopyHint: () => void;
 }
 
-const hintCopy: Record<HintLevel, string> = {
-  1: "Не спорьте с требованием. Подумайте, что человек пытается защитить.",
-  2: "Назовите возможный интерес как гипотезу и спросите, верно ли вы поняли.",
-  3: "Например: «Правильно понимаю, для вас главное — не перегрузить мастеров и не сорвать запуск?»",
-};
+const hintSteps = [
+  { label: "намёк на направление", icon: "/icons/Group%20205.svg" },
+  { label: "возможный интерес", icon: "/icons/Group%20240.svg" },
+  { label: "пример фразы", icon: "/icons/Group%20238.svg" },
+];
 
-export function BriefSidebar({ briefOpen, onToggleBrief, hintVisible, hintLevel }: BriefSidebarProps) {
+export function BriefSidebar({
+  briefOpen, onToggleBrief, hintVisible, hintsAvailable, hintLevel, hintText, inputMode, onCloseHint, onCopyHint,
+}: BriefSidebarProps) {
   return (
     <aside className="brief-column">
       <section className={cn("brief-panel", briefOpen && "is-open")}>
@@ -79,32 +85,51 @@ export function BriefSidebar({ briefOpen, onToggleBrief, hintVisible, hintLevel 
         </div>
       </section>
 
-      <section className="task-card" hidden={briefOpen}>
+      <section className="task-card" hidden={briefOpen || hintVisible}>
         <h2>Ваша задача</h2>
         <p>Понять, что стоит за требованием об отсрочке, и договориться о следующем шаге.</p>
       </section>
 
-      <section className="mentor-panel" hidden={briefOpen}>
+      <section className={cn("mentor-panel", hintVisible && "is-hint-open")} hidden={briefOpen || !hintsAvailable}>
         <div className="mentor-title">
-          <img src="/icons/mentor.svg" alt="" />
+          <img src="/icons/mentor.svg" alt="" width="32" height="32" />
           <h2>Наставник</h2>
         </div>
-        <p className={cn(hintVisible && "mentor-hint")} aria-live="polite">
-          {hintVisible
-            ? hintCopy[hintLevel || 1]
-            : "Появится здесь, только если вы попросите подсказку. Сам в разговор не вмешивается."}
-        </p>
-        {hintVisible && hintLevel && <small className="mentor-level">Подсказка H{hintLevel}</small>}
-
-        <div className="mentor-options">
-          <label><Switch /><span>намёк на направление</span></label>
-          <label><Switch /><span>возможный интерес</span></label>
-          <label><Switch /><span>пример фразы</span></label>
-        </div>
-
-        <small>
-          Подсказка не снижает оценку качества ответа, попытка отмечается как выполненная с поддержкой.
-        </small>
+        {hintVisible && hintLevel ? (
+          <>
+            <p className="mentor-progress-label">Подсказка {hintLevel} из 3</p>
+            <div className="mentor-progress" role="img" aria-label={`Уровень подсказки ${hintLevel} из 3`}>
+              {[1, 2, 3].map((step) => (
+                <span key={step} className={cn(step === hintLevel && "active")} />
+              ))}
+            </div>
+            <p className="mentor-hint" aria-live="polite">{hintText}</p>
+            <div className="mentor-actions">
+              {hintLevel === 3 && inputMode === "text" && (
+                <button type="button" className="mentor-copy-action" onClick={onCopyHint}>
+                  Скопировать в черновик
+                </button>
+              )}
+              <button type="button" className="mentor-return-action" onClick={onCloseHint}>
+                Вернуться к разговору
+              </button>
+            </div>
+            <small>Подсказка закрывается только вами.<br />Отправка — отдельным действием.</small>
+          </>
+        ) : (
+          <>
+            <p>Появится здесь, только если вы попросите подсказку. Сам в разговор не вмешивается.</p>
+            <div className="mentor-options" aria-label="Уровни подсказок">
+              {hintSteps.map(({ label, icon }) => (
+                <div className="mentor-option" key={label}>
+                  <img src={icon} alt="" width="61" height="43" />
+                  <span>{label}</span>
+                </div>
+              ))}
+            </div>
+            <small>Подсказка не снижает оценку качества ответа — попытка отмечается как выполненная с поддержкой.</small>
+          </>
+        )}
       </section>
     </aside>
   );

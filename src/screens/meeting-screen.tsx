@@ -71,17 +71,27 @@ export function MeetingScreen() {
           recordingTime={session.recordingTime}
           isPaused={session.isPaused}
           isFinished={session.isFinished}
+          hintsAvailable={session.hintsAvailable}
+          completionState={session.completionState}
           transcriptRef={session.transcriptRef}
           latestAssistantMessage={session.latestAssistantMessage}
           onToggleRecording={session.toggleRecording}
           onSendMessage={session.sendMessage}
           onOpenDialog={session.openDialog}
+          onOpenReport={() => {
+            window.location.search = `?screen=report&attempt=${encodeURIComponent(session.sessionId)}`;
+          }}
         />
         <BriefSidebar
           briefOpen={session.briefOpen}
           onToggleBrief={() => session.setBriefOpen((value) => !value)}
           hintVisible={session.hintVisible}
+          hintsAvailable={session.hintsAvailable}
           hintLevel={session.hintLevel}
+          hintText={session.currentHintText}
+          inputMode={session.inputMode}
+          onCloseHint={session.closeHint}
+          onCopyHint={session.copyHintToDraft}
         />
       </section>
 

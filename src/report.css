@@ -8,9 +8,7 @@
   height: 100dvh;
   overflow: auto;
   color: var(--report-blue);
-  background-color: #1b1918;
-  background-image: radial-gradient(circle at 8px 8px, transparent 0 4px, rgba(213, 226, 245, .08) 4.5px 6px, transparent 6.5px);
-  background-size: 22px 22px;
+  background: #22201e url("/bg.svg") center / cover no-repeat;
   font-family: "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -121,7 +119,8 @@
   object-fit: cover;
   pointer-events: none;
 }
-.report-sidebar-icon.is-active { color: var(--report-coral); background: #fff0dd; }
+.report-sidebar-icon.is-active { background: transparent; }
+.report-sidebar-icon.is-active img { transform: scale(1.32); }
 .report-sidebar-icon:focus-visible,
 .report-sidebar-account:focus-visible,
 .report-sidebar-settings:focus-visible,

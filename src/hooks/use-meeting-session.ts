@@ -1,8 +1,9 @@
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { initialMessages, openingMessage } from "@/data/lesson";
+import { hintText, inferB3L2Opportunity, isVoiceHintCommand, nextHintLevel, resolveHintPolicy } from "@/lib/lesson-hints";
 import { getAttempt, getAttemptPrefix, saveAttempt } from "@/services/attempt-storage";
 import { requestAssistantReply, transcribeAudio } from "@/services/meeting-api";
-import type { ChatMessage, DialogKind, SessionState } from "@/types/meeting";
+import type { ChatMessage, CompletionState, DialogKind, SessionState } from "@/types/meeting";
 import type { HintLevel, SessionEvent, StoredAttempt, HintUsage } from "@/types/reporting";
 
 function formatTime(seconds: number) {
@@ -15,6 +16,7 @@ export function useMeetingSession() {
   const sessionIdRef = useRef(crypto.randomUUID());
   const startedAtRef = useRef(new Date().toISOString());
   const search = new URLSearchParams(window.location.search);
+  const hintPolicy = resolveHintPolicy("B3-L2", search.get("mode") === "exam" ? "exam" : "lesson");
   const parentAttemptId = search.get("replayAttempt") || undefined;
   const replayFromTurnId = search.get("turn") || undefined;
   const parentAttempt = parentAttemptId ? getAttempt(parentAttemptId) : null;
@@ -40,6 +42,8 @@ export function useMeetingSession() {
   const [notice, setNotice] = useState<string | null>(null);
   const [hintVisible, setHintVisible] = useState(false);
   const [hintLevel, setHintLevel] = useState<HintLevel | null>(null);
+  const [currentHintText, setCurrentHintText] = useState("");
+  const [completionState, setCompletionState] = useState<CompletionState>("ACTIVE");
   const [activeDialog, setActiveDialog] = useState<DialogKind | null>("intro");
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -49,7 +53,24 @@ export function useMeetingSession() {
   const transcriptRef = useRef<HTMLTextAreaElement | null>(null);
   const conversationRef = useRef<HTMLDivElement | null>(null);
   const sessionStateRef = useRef<SessionState>("active");
-  const pendingReplyRef = useRef<ChatMessage | null>(null);
+  const completionStateRef = useRef<CompletionState>("ACTIVE");
+  const completionReasonRef = useRef<StoredAttempt["completionReason"]>(undefined);
+  const scenarioOutcomeRef = useRef("UNKNOWN");
+  const messagesRef = useRef(messages);
+  const currentOpportunityIdRef = useRef(
+    (replayPrefix.length ? replayPrefix : initialMessages)
+      .filter((message) => message.role === "assistant")
+      .reduce((opportunityId, message) => inferB3L2Opportunity(message.content, opportunityId), "O1"),
+  );
+  const pendingReplyRef = useRef<{
+    reply: ChatMessage;
+    transcript: ChatMessage[];
+    data: Awaited<ReturnType<typeof requestAssistantReply>>;
+    wasClosing: boolean;
+  } | null>(null);
+  const pendingHintRequestRef = useRef(false);
+  const hintFlowBusyRef = useRef(false);
+  const isSendingRef = useRef(false);
   const chatAbortRef = useRef<AbortController | null>(null);
   const transcriptionAbortRef = useRef<AbortController | null>(null);
   const startingRecordingRef = useRef(false);
@@ -62,7 +83,10 @@ export function useMeetingSession() {
       ? [{ id: crypto.randomUUID(), type: "REPLAY_STARTED", occurredAt: initialEventTime, turnId: replayFromTurnId }]
       : []),
     ...(!replayPrefix.length
-      ? [{ id: crypto.randomUUID(), type: "AI_POSITION_EMITTED", occurredAt: initialEventTime, turnId: "opening", opportunityId: "O1" }]
+      ? [
+        { id: crypto.randomUUID(), type: "OPPORTUNITY_CREATED", occurredAt: initialEventTime, turnId: "opening", opportunityId: "O1" },
+        { id: crypto.randomUUID(), type: "AI_POSITION_EMITTED", occurredAt: initialEventTime, turnId: "opening", opportunityId: "O1" },
+      ]
       : []),
   ]);
 
@@ -80,6 +104,8 @@ export function useMeetingSession() {
       transcript,
       events: eventsRef.current,
       hints: hintsRef.current,
+      completionState: completionStateRef.current,
+      completionReason: completionReasonRef.current,
       parentAttemptId,
       replayFromTurnId,
     };
@@ -101,14 +127,18 @@ export function useMeetingSession() {
     opportunityId?: string,
     occurredAt = new Date().toISOString(),
     hint?: HintLevel,
+    details?: SessionEvent["details"],
   ) {
+    const id = crypto.randomUUID();
     const event: SessionEvent = {
-      id: crypto.randomUUID(),
+      id,
+      clientEventId: type.startsWith("USER_") || type === "SESSION_MANUAL_FINISH_CONFIRMED" ? id : undefined,
       type,
       occurredAt,
       turnId,
       opportunityId,
       hintLevel: hint,
+      details,
     };
     eventsRef.current = [...eventsRef.current, event];
     return event;
@@ -162,6 +192,10 @@ export function useMeetingSession() {
     try {
       const data = await transcribeAudio(blob, controller.signal);
       if (controller.signal.aborted) return;
+      if (hintPolicy && isVoiceHintCommand(data.text, hintPolicy)) {
+        requestHint();
+        return;
+      }
       setHasTranscribedInput(Boolean(data.text.trim()));
       setInput((current) => [current.trim(), data.text.trim()].filter(Boolean).join(" "));
       setInputMode("text");
@@ -254,49 +288,133 @@ export function useMeetingSession() {
     if (!isTranscribing && !isPaused && !isFinished) void startRecording();
   }
 
+  function updateCompletionState(next: CompletionState, reason?: StoredAttempt["completionReason"]) {
+    completionStateRef.current = next;
+    if (reason) completionReasonRef.current = reason;
+    setCompletionState(next);
+  }
+
+  function commitAssistantReply(pending: NonNullable<typeof pendingReplyRef.current>) {
+    if (sessionStateRef.current === "finished") return;
+    const { reply, transcript, data, wasClosing } = pending;
+    const updatedMessages = [...transcript, reply];
+    const priorOpportunityId = currentOpportunityIdRef.current;
+    const opportunityId = data.opportunityId || inferB3L2Opportunity(reply.content, priorOpportunityId);
+    const userTurnId = transcript.at(-1)?.id;
+    if (wasClosing) {
+      recordEvent("AI_CLOSING_REPLY", reply.id, opportunityId, reply.createdAt);
+      updateCompletionState("EVALUATING");
+      recordEvent("EVALUATION_STARTED", reply.id, opportunityId);
+    } else {
+      recordEvent("OPPORTUNITY_RESOLVED", userTurnId, priorOpportunityId);
+      recordEvent("AI_TURN_EMITTED", reply.id, opportunityId, reply.createdAt);
+      if (opportunityId !== priorOpportunityId) {
+        recordEvent("OPPORTUNITY_CREATED", reply.id, opportunityId, reply.createdAt);
+        recordEvent("AI_POSITION_EMITTED", reply.id, opportunityId, reply.createdAt);
+      }
+      recordEvent("COMPLETION_CHECKED", reply.id, opportunityId, undefined, undefined, {
+        policy_version: data.policyVersion || "B3-L2-completion-1.0",
+        valid_opportunity_count: data.validOpportunityCount ?? 0,
+        scenario_outcome: data.scenarioOutcome || "UNKNOWN",
+        result: data.completionState || "ACTIVE",
+      });
+    }
+    currentOpportunityIdRef.current = opportunityId;
+    if (!wasClosing && data.scenarioOutcome && data.scenarioOutcome !== "UNKNOWN") scenarioOutcomeRef.current = data.scenarioOutcome;
+    messagesRef.current = updatedMessages;
+    setMessages(updatedMessages);
+
+    if (wasClosing || data.completionState === "COMPLETED") {
+      const endedAt = new Date().toISOString();
+      setHintVisible(false);
+      updateCompletionState("COMPLETED", wasClosing ? completionReasonRef.current : "RESISTANCE");
+      recordEvent("PRACTICE_ENDED", reply.id, opportunityId, endedAt);
+      recordEvent("SESSION_COMPLETED", reply.id, opportunityId, endedAt, undefined, {
+        completion_reason: completionReasonRef.current || "GOAL_COMPLETE",
+        scenario_outcome: scenarioOutcomeRef.current,
+      });
+      sessionStateRef.current = "finished";
+      setIsFinished(true);
+      persistAttempt(updatedMessages, endedAt, "system");
+    } else if (data.completionState === "CLOSING_REQUIRED") {
+      setHintVisible(false);
+      updateCompletionState("CLOSING_REQUIRED", data.completionReason || "GOAL_COMPLETE");
+      recordEvent("CLOSING_REQUESTED", reply.id, opportunityId, undefined, undefined, {
+        completion_reason: data.completionReason || "GOAL_COMPLETE",
+      });
+      persistAttempt(updatedMessages);
+    } else {
+      persistAttempt(updatedMessages);
+    }
+
+    if (pendingHintRequestRef.current) {
+      if (completionStateRef.current === "ACTIVE") deliverHintRequest();
+      else {
+        pendingHintRequestRef.current = false;
+        hintFlowBusyRef.current = false;
+        setNotice("Встреча перешла к итогу, поэтому подсказка уже недоступна.");
+      }
+    }
+  }
+
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const content = input.trim();
-    if (!content || isSending || !isSessionActive()) return;
+    const wasClosing = completionStateRef.current === "CLOSING_REQUIRED";
+    if (!content || isSendingRef.current || !isSessionActive() ||
+      (completionStateRef.current !== "ACTIVE" && !wasClosing)) return;
 
+    const previousMessages = messagesRef.current;
+    const previousEvents = eventsRef.current;
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
       role: "user",
       content,
       createdAt: new Date().toISOString(),
     };
-    const nextMessages = [...messages, userMessage];
-    recordEvent("USER_UTTERANCE_FINALIZED", userMessage.id);
+    const nextMessages = [...previousMessages, userMessage];
+    recordEvent(wasClosing ? "USER_CLOSING_ACTION" : "USER_UTTERANCE_FINALIZED", userMessage.id, currentOpportunityIdRef.current);
+    if (wasClosing) updateCompletionState("CLOSING_REPLY");
+    messagesRef.current = nextMessages;
     persistAttempt(nextMessages);
     setMessages(nextMessages);
     setInput("");
     setHasTranscribedInput(false);
+    isSendingRef.current = true;
     setIsSending(true);
     setNotice(null);
     const controller = new AbortController();
     chatAbortRef.current = controller;
 
     try {
-      const data = await requestAssistantReply(nextMessages, controller.signal);
+      const data = await requestAssistantReply(nextMessages, controller.signal, {
+        phase: wasClosing ? "CLOSING_REQUIRED" : "ACTIVE",
+        clientEventId: userMessage.id,
+      });
       if (controller.signal.aborted) return;
+      if (typeof data.reply !== "string" || !data.reply.trim()) throw new Error("Сервер вернул пустую реплику. Повторите действие.");
       const reply: ChatMessage = {
         id: crypto.randomUUID(),
         role: "assistant",
         content: data.reply,
         createdAt: new Date().toISOString(),
       };
-      if (sessionStateRef.current === "paused") pendingReplyRef.current = reply;
-      else {
-        recordEvent("AI_TURN_EMITTED", reply.id, undefined, reply.createdAt);
-        const updatedMessages = [...nextMessages, reply];
-        setMessages(updatedMessages);
-        persistAttempt(updatedMessages);
-      }
+      const pending = { reply, transcript: nextMessages, data, wasClosing };
+      if (sessionStateRef.current === "paused") pendingReplyRef.current = pending;
+      else commitAssistantReply(pending);
     } catch (error) {
       if (controller.signal.aborted) return;
+      eventsRef.current = previousEvents;
+      messagesRef.current = previousMessages;
+      setMessages(previousMessages);
+      setInput(content);
+      if (wasClosing) updateCompletionState("CLOSING_REQUIRED");
+      persistAttempt(previousMessages);
       setNotice(error instanceof Error ? error.message : "Не удалось получить ответ");
+      if (pendingHintRequestRef.current && !wasClosing) deliverHintRequest();
     } finally {
       chatAbortRef.current = null;
+      isSendingRef.current = false;
       setIsSending(false);
     }
   }
@@ -319,36 +437,44 @@ export function useMeetingSession() {
     if (recorder?.state === "paused") recorder.resume();
     const reply = pendingReplyRef.current;
     pendingReplyRef.current = null;
-    if (reply) {
-      recordEvent("AI_TURN_EMITTED", reply.id, undefined, reply.createdAt);
-      const updatedMessages = [...messages, reply];
-      setMessages(updatedMessages);
-      persistAttempt(updatedMessages);
-    }
+    if (reply) commitAssistantReply(reply);
   }
 
   function openDialog(kind: DialogKind) {
     if (sessionStateRef.current === "finished") return;
-    if (kind === "pause" || kind === "finish") pauseSession();
     if (kind === "hint") {
-      recordEvent("USER_HINT_REQUEST", messages.at(-1)?.id);
-      persistAttempt(messages);
+      requestHint();
+      return;
     }
+    if (kind === "pause" || kind === "finish") pauseSession();
     setActiveDialog(kind);
   }
 
   function dismissDialog() {
     if (activeDialog === "pause" || activeDialog === "finish") resumeSession();
+    if (activeDialog === "hint") hintFlowBusyRef.current = false;
     setActiveDialog(null);
   }
 
   function finishSession() {
     if (sessionStateRef.current === "finished") return sessionIdRef.current;
     const endedAt = new Date().toISOString();
-    recordEvent("PRACTICE_END_REQUESTED", messages.at(-1)?.id, undefined, endedAt);
-    recordEvent("PRACTICE_ENDED", messages.at(-1)?.id, undefined, endedAt);
-    if (!persistAttempt(messages, endedAt, "manual")) {
-      eventsRef.current = eventsRef.current.slice(0, -2);
+    const transcript = messagesRef.current;
+    const previousEvents = eventsRef.current;
+    recordEvent("PRACTICE_END_REQUESTED", transcript.at(-1)?.id, undefined, endedAt);
+    recordEvent("SESSION_MANUAL_FINISH_CONFIRMED", transcript.at(-1)?.id, undefined, endedAt);
+    recordEvent("PRACTICE_ENDED", transcript.at(-1)?.id, undefined, endedAt);
+    recordEvent("SESSION_COMPLETED", transcript.at(-1)?.id, undefined, endedAt, undefined, {
+      completion_reason: "MANUAL",
+      scenario_outcome: scenarioOutcomeRef.current,
+    });
+    const previousCompletionState = completionStateRef.current;
+    const previousCompletionReason = completionReasonRef.current;
+    updateCompletionState("COMPLETED", "MANUAL");
+    if (!persistAttempt(transcript, endedAt, "manual")) {
+      eventsRef.current = previousEvents;
+      completionReasonRef.current = previousCompletionReason;
+      updateCompletionState(previousCompletionState);
       return null;
     }
     sessionStateRef.current = "finished";
@@ -365,24 +491,77 @@ export function useMeetingSession() {
     return sessionIdRef.current;
   }
 
+  function deliverHintRequest() {
+    pendingHintRequestRef.current = false;
+    if (completionStateRef.current !== "ACTIVE" || sessionStateRef.current === "finished") {
+      hintFlowBusyRef.current = false;
+      return;
+    }
+    setNotice(null);
+    try {
+      if (localStorage.getItem("negotiation-arena:hint-disclosure:v1") === "seen") {
+        revealHint();
+        return;
+      }
+    } catch {
+      // Hint display still works if browser storage is unavailable.
+    }
+    setActiveDialog("hint");
+  }
+
+  function requestHint() {
+    if (!hintPolicy?.enabled || completionStateRef.current !== "ACTIVE" ||
+      sessionStateRef.current !== "active" || hintFlowBusyRef.current) return;
+    hintFlowBusyRef.current = true;
+    const latest = messagesRef.current.at(-1);
+    recordEvent("USER_HINT_REQUEST", latest?.id, currentOpportunityIdRef.current);
+    persistAttempt(messagesRef.current);
+    if (isSendingRef.current) {
+      pendingHintRequestRef.current = true;
+      setNotice("Подсказка появится после ответа директора.");
+      return;
+    }
+    deliverHintRequest();
+  }
+
   function revealHint() {
-    const level = Math.min(hintsRef.current.length + 1, 3) as HintLevel;
+    if (!hintPolicy || completionStateRef.current !== "ACTIVE" || sessionStateRef.current === "finished") return;
+    const level = nextHintLevel(hintsRef.current.length);
     const occurredAt = new Date().toISOString();
+    const opportunityId = currentOpportunityIdRef.current;
+    const text = hintText(hintPolicy, level, opportunityId);
     const hint: HintUsage = {
       id: crypto.randomUUID(),
       level,
       occurredAt,
-      afterTurnId: messages.at(-1)?.id,
+      afterTurnId: messagesRef.current.at(-1)?.id,
+      opportunityId,
+      text,
     };
     hintsRef.current = [...hintsRef.current, hint];
-    recordEvent("HINT_SHOWN", hint.afterTurnId, undefined, occurredAt, level);
+    recordEvent("HINT_SHOWN", hint.afterTurnId, opportunityId, occurredAt, level);
     setHintVisible(true);
     setHintLevel(level);
+    setCurrentHintText(text);
     setBriefOpen(false);
-    persistAttempt(messages);
+    hintFlowBusyRef.current = false;
+    try { localStorage.setItem("negotiation-arena:hint-disclosure:v1", "seen"); } catch { /* optional */ }
+    persistAttempt(messagesRef.current);
+  }
+
+  function closeHint() {
+    setHintVisible(false);
+  }
+
+  function copyHintToDraft() {
+    if (hintLevel !== 3 || inputMode !== "text" || !hintVisible) return;
+    setInput((current) => current.trim() ? `${current.trim()}\n${currentHintText}` : currentHintText);
+    setHintVisible(false);
+    window.setTimeout(() => transcriptRef.current?.focus(), 0);
   }
 
   return {
+    sessionId: sessionIdRef.current,
     messages,
     input,
     setInput,
@@ -400,7 +579,12 @@ export function useMeetingSession() {
     notice,
     clearNotice: () => setNotice(null),
     hintVisible,
+    hintsAvailable: Boolean(hintPolicy?.enabled),
     hintLevel,
+    currentHintText,
+    closeHint,
+    copyHintToDraft,
+    completionState,
     revealHint,
     activeDialog,
     conversationRef,

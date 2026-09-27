@@ -9,7 +9,7 @@
     "Montserrat Alternates", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
   color: #d7e5fa;
-  background: #181615;
+  background: #22201e;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   letter-spacing: 0;
@@ -23,7 +23,7 @@ html {
   min-width: 320px;
   height: 100%;
   overflow: hidden;
-  background: #181615;
+  background: #22201e;
 }
 
 body {
@@ -53,14 +53,7 @@ button {
   grid-template-rows: auto minmax(0, 1fr);
   padding: 3dvh 6.25% 5.5dvh;
   overflow: hidden;
-  background-color: #1b1918;
-  background-image: radial-gradient(
-    circle at 8px 8px,
-    transparent 0 4px,
-    rgba(213, 226, 245, 0.08) 4.5px 6px,
-    transparent 6.5px
-  );
-  background-size: 22px 22px;
+  background: #22201e url("/bg.svg") center / cover no-repeat;
 }
 
 .meeting-screen {
@@ -355,6 +348,38 @@ button {
   border-radius: 999px;
   font-size: 11px;
   font-weight: 600;
+}
+
+.meeting-completion-action,
+.meeting-closing-wait {
+  min-height: 66px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #c9d8ef;
+  border-radius: 13px;
+  color: #d7e5fa;
+  background: #22201f;
+}
+
+.meeting-completion-action p { margin: 0; }
+.meeting-completion-action button { color: #22201f; background: #cddff8; }
+.meeting-closing-wait { justify-content: center; }
+
+.text-composer:has(.send-action span) .send-action {
+  width: auto;
+  min-width: 110px;
+  padding-inline: 12px;
+  gap: 6px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.text-composer:has(.send-action span) .send-action svg {
+  width: 18px;
+  height: 18px;
 }
 
 .input-mode {
@@ -808,6 +833,13 @@ button {
   font-weight: 700;
 }
 
+.mentor-title img {
+  display: block;
+  width: 27px;
+  height: 27px;
+  object-fit: contain;
+}
+
 .mentor-panel > p {
   margin-top: 8px;
   font-size: 12px;
@@ -819,13 +851,21 @@ button {
   gap: 14px;
 }
 
-.mentor-options label {
+.mentor-option {
   display: flex;
   align-items: center;
   gap: 10px;
   color: #d4dfef;
   font-size: 12px;
   font-weight: 600;
+}
+
+.mentor-option img {
+  display: block;
+  width: 45px;
+  height: 32px;
+  flex: 0 0 45px;
+  object-fit: contain;
 }
 
 .mentor-panel small {
@@ -836,16 +876,82 @@ button {
   line-height: 1.45;
 }
 
-.mentor-panel .mentor-hint {
-  color: #d7e5fa;
+.mentor-panel.is-hint-open {
+  border-color: transparent;
+  color: #544c4c;
+  background: #cddff8;
 }
 
-.mentor-panel .mentor-level {
-  display: block;
-  margin-top: 4px;
-  padding-top: 0;
+.mentor-panel .mentor-progress-label {
+  margin-top: 8px;
+  color: #544c4c;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mentor-progress {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 12px;
+}
+
+.mentor-progress span {
+  height: 5px;
+  border-radius: 999px;
+  background: #8e8b90;
+}
+
+.mentor-progress span.active { background: #ff6548; }
+
+.mentor-panel .mentor-hint {
+  margin-top: 20px;
+  color: #544c4c;
+  font-family: "Montserrat Alternates", ui-sans-serif, system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.mentor-actions {
+  display: grid;
+  gap: 9px;
+  margin-top: auto;
+  padding-top: 22px;
+}
+
+.mentor-actions button {
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 2px solid #544c4c;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: "Montserrat Alternates", ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mentor-copy-action {
   color: #ff6548;
-  font-weight: 800;
+  background: #544c4c;
+}
+
+.mentor-return-action {
+  color: #544c4c;
+  background: transparent;
+}
+
+.mentor-panel.is-hint-open small {
+  margin-top: 0;
+  padding-top: 10px;
+  color: #544c4c;
+  font-size: 10px;
+}
+
+.mentor-actions button:focus-visible,
+.mentor-actions button:hover {
+  outline: 2px solid #ff6548;
+  outline-offset: 2px;
 }
 
 .session-dialog {
@@ -1200,22 +1306,21 @@ button {
   display: grid;
   flex: 0 0 auto;
   grid-template-columns: 1fr 1.05fr;
-  gap: 14px;
+  gap: 24px;
 }
 
 .brief-screen-actions button {
   min-width: 0;
-  min-height: 84px;
-  height: auto;
-  padding: 6px 16px;
+  height: 60px;
+  padding: 0 16px;
   border: 1.5px solid #cfe0f7;
   border-radius: 999px;
   color: #cfe0f7;
   background: rgba(27, 25, 24, 0.72);
-  font-size: 24pt;
+  font-size: 24px;
   font-weight: 700;
   line-height: 1.1;
-  white-space: normal;
+  white-space: nowrap;
 }
 
 .brief-screen-actions .brief-back {
@@ -1239,8 +1344,8 @@ button {
 }
 
 .brief-screen-actions .brief-start svg {
-  width: 26px;
-  height: 26px;
+  width: 42px;
+  height: 42px;
   flex: 0 0 auto;
   stroke-width: 1.6;
 }
@@ -1283,7 +1388,7 @@ button {
   }
 
   .brief-screen-actions { grid-template-columns: 1fr; }
-  .brief-screen-actions button { min-height: 84px; height: auto; font-size: 24pt; }
+  .brief-screen-actions button { height: 52px; font-size: 18px; }
   .brief-screen-overview { gap: 16px; padding: 20px; }
   .brief-screen-title { font-size: 26px; }
   .brief-screen-section h3, .brief-screen-task h3 { font-size: 18px; }
@@ -1511,13 +1616,24 @@ button {
   .task-card { min-height: 193px; padding: 28px; border-radius: 24px; }
   .task-card h2 { margin-bottom: 14px; font-size: 25px; }
   .task-card p, .mentor-panel p { font-size: 14px; line-height: 1.45; }
+  .task-card p { font-size: 18px; }
   .mentor-panel { margin-top: 0; padding: 25px 28px; border-radius: 24px; }
   .mentor-title { gap: 12px; }
+  .mentor-title img { width: 32px; height: 32px; }
   .mentor-title h2 { font-size: 28px; }
   .mentor-panel > p { margin-top: 12px; }
   .mentor-options { margin-top: 34px; gap: 18px; }
-  .mentor-options label { gap: 14px; font-size: 15px; }
-  .mentor-panel small { padding-top: 30px; font-size: 11px; }
+  .mentor-panel:not(.is-hint-open) > p { font-size: 17px; font-weight: 600; }
+  .mentor-option { gap: 14px; font-size: 18px; }
+  .mentor-option img { width: 61px; height: 43px; flex-basis: 61px; }
+  .mentor-panel small { padding-top: 30px; font-size: 13px; }
+  .mentor-panel .mentor-progress-label { font-size: 14px; }
+  .mentor-progress { gap: 8px; margin-top: 15px; }
+  .mentor-progress span { height: 8px; }
+  .mentor-panel .mentor-hint { margin-top: 26px; font-size: 23px; }
+  .mentor-actions { gap: 14px; }
+  .mentor-actions button { min-height: 59px; font-size: 17px; }
+  .mentor-panel.is-hint-open small { font-size: 13px; }
   .brief-screen-grid { gap: 24px; }
   .brief-screen-overview { gap: 19px; padding: 30px; border-radius: 22px; }
   .brief-screen-kicker { font-size: 14px; }
@@ -1542,7 +1658,7 @@ button {
   .brief-screen-how-row h3 { font-size: 18px; }
   .brief-screen-how-row p { font-size: 15px; line-height: 1.35; }
   .brief-screen-actions { gap: 20px; }
-  .brief-screen-actions button { min-height: 84px; height: auto; padding-inline: 18px; font-size: 24pt; }
+  .brief-screen-actions button { height: 60px; padding-inline: 18px; font-size: 24px; }
   .brief-screen-actions .brief-start svg { width: 36px; height: 36px; }
 }
 
@@ -1580,11 +1696,15 @@ button {
   .task-card { min-height: 257px; padding: 37px; border-radius: 32px; }
   .task-card h2 { font-size: 33px; }
   .task-card p, .mentor-panel p { font-size: 19px; }
+  .mentor-panel:not(.is-hint-open) > p { font-size: 20px; }
   .mentor-panel { padding: 33px 37px; border-radius: 32px; }
   .mentor-title h2 { font-size: 37px; }
   .mentor-options { margin-top: 45px; gap: 24px; }
-  .mentor-options label { font-size: 20px; }
+  .mentor-option { font-size: 20px; }
   .mentor-panel small { font-size: 15px; }
+  .mentor-panel .mentor-hint { font-size: 30px; }
+  .mentor-actions button { min-height: 78px; font-size: 21px; }
+  .mentor-panel.is-hint-open small { font-size: 15px; }
   .brief-screen-grid { gap: 32px; }
   .brief-screen-overview { gap: 24px; padding: 37px; border-radius: 32px; }
   .brief-screen-kicker { font-size: 14px; }
@@ -1609,7 +1729,7 @@ button {
   .brief-screen-how-row h3 { font-size: 18px; }
   .brief-screen-how-row p { font-size: 15px; line-height: 1.4; }
   .brief-screen-actions { gap: 24px; }
-  .brief-screen-actions button { min-height: 84px; height: auto; padding-inline: 26px; font-size: 24pt; }
+  .brief-screen-actions button { height: 74px; padding-inline: 26px; font-size: 24px; }
   .brief-screen-actions .brief-start svg { width: 42px; height: 42px; }
 }
 

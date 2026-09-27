@@ -51,7 +51,12 @@ export function useReportingAttempt(enabled = true) {
         analysis,
         events: [
           ...current.events,
+          ...(!current.events.some((event) => event.type === "EVALUATION_STARTED")
+            ? [{ id: crypto.randomUUID(), type: "EVALUATION_STARTED", occurredAt: new Date().toISOString() }]
+            : []),
           ...addedEvents,
+          { id: crypto.randomUUID(), type: "EVALUATION_COMPLETED", occurredAt: analysis.analyzedAt },
+          { id: crypto.randomUUID(), type: "REPORT_READY", occurredAt: analysis.analyzedAt },
           { id: crypto.randomUUID(), type: "REPORT_GENERATED", occurredAt: analysis.analyzedAt },
         ],
       };

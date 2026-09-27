@@ -4,7 +4,7 @@ import { CounterpartyAvatar } from "@/components/counterparty-avatar";
 import { Button } from "@/components/ui/button";
 import { waveform } from "@/data/lesson";
 import { cn } from "@/lib/utils";
-import type { DialogKind } from "@/types/meeting";
+import type { CompletionState, DialogKind } from "@/types/meeting";
 
 interface MeetingStageProps {
   input: string;
@@ -18,11 +18,14 @@ interface MeetingStageProps {
   recordingTime: string;
   isPaused: boolean;
   isFinished: boolean;
+  hintsAvailable: boolean;
+  completionState: CompletionState;
   transcriptRef: RefObject<HTMLTextAreaElement | null>;
   latestAssistantMessage: string;
   onToggleRecording: () => void;
   onSendMessage: FormEventHandler<HTMLFormElement>;
   onOpenDialog: (kind: DialogKind) => void;
+  onOpenReport: () => void;
 }
 
 export function MeetingStage({
@@ -37,11 +40,14 @@ export function MeetingStage({
   recordingTime,
   isPaused,
   isFinished,
+  hintsAvailable,
+  completionState,
   transcriptRef,
   latestAssistantMessage,
   onToggleRecording,
   onSendMessage,
   onOpenDialog,
+  onOpenReport,
 }: MeetingStageProps) {
   return (
     <section className="meeting-stage">
@@ -49,7 +55,9 @@ export function MeetingStage({
         <span className="role-chip"><UserRound size={18} />Директор завода · AI-контрагент</span>
         <span className={cn("recording-chip", isRecording && !isPaused && "active")}>
           <i />
-          {isFinished ? "Встреча завершена" : isPaused ? "Пауза" : isRecording
+          {isFinished ? "Встреча завершена" : isPaused ? "Пауза" : completionState === "CLOSING_REQUIRED"
+            ? "Подведите итог" : completionState === "CLOSING_REPLY" || completionState === "EVALUATING"
+              ? "Ожидаем заключительную реплику" : isRecording
             ? `Идёт запись · ${recordingTime}`
             : "Микрофон готов"}
         </span>
@@ -70,12 +78,21 @@ export function MeetingStage({
             <button type="button" className={cn(inputMode === "voice" && "active")} onClick={() => setInputMode("voice")}>Голос</button>
             <button type="button" className={cn(inputMode === "text" && "active")} onClick={() => setInputMode("text")}>Текст</button>
           </div>
-          <Button type="button" variant="outline" className="hint-action" aria-haspopup="dialog" onClick={() => onOpenDialog("hint")} disabled={isFinished}>
-            Подсказка
-          </Button>
+          {hintsAvailable && (
+            <Button type="button" variant="outline" className="hint-action" aria-haspopup="dialog" onClick={() => onOpenDialog("hint")} disabled={isFinished || isPaused || isRecording || isTranscribing || completionState !== "ACTIVE"}>
+              Подсказка
+            </Button>
+          )}
         </div>
 
-        {inputMode === "voice" ? (
+        {isFinished ? (
+          <div className="meeting-completion-action">
+            <p>Встреча завершена. Разбор готов к просмотру.</p>
+            <Button type="button" onClick={onOpenReport}>Перейти к разбору</Button>
+          </div>
+        ) : completionState === "CLOSING_REPLY" || completionState === "EVALUATING" ? (
+          <div className="meeting-closing-wait" role="status">Ожидаем заключительную реплику директора…</div>
+        ) : inputMode === "voice" ? (
           <div className="voice-composer">
             <button
               type="button"
@@ -127,7 +144,7 @@ export function MeetingStage({
                     event.currentTarget.form?.requestSubmit();
                   }
                 }}
-                placeholder="Введите реплику или запишите её голосом..."
+                placeholder={completionState === "CLOSING_REQUIRED" ? "Подведите итог и предложите следующий шаг..." : "Введите реплику или запишите её голосом..."}
                 aria-label="Ваша реплика"
                 aria-describedby={hasTranscribedInput ? "transcript-help" : undefined}
                 disabled={isSending || isPaused || isFinished}
@@ -137,8 +154,8 @@ export function MeetingStage({
                 {hasTranscribedInput && "Распознанный текст можно исправить до отправки"}
               </p>
             </div>
-            <Button type="submit" size="icon" className="send-action" disabled={!input.trim() || isSending || isPaused || isFinished} title="Отправить" aria-label="Отправить">
-              <Send aria-hidden="true" />
+            <Button type="submit" size={completionState === "CLOSING_REQUIRED" ? "default" : "icon"} className="send-action" disabled={!input.trim() || isSending || isPaused || isFinished} title={completionState === "CLOSING_REQUIRED" ? "Подвести итог" : "Отправить"} aria-label={completionState === "CLOSING_REQUIRED" ? "Подвести итог" : "Отправить"}>
+              {completionState === "CLOSING_REQUIRED" && <span>Подвести итог</span>}<Send aria-hidden="true" />
             </Button>
           </form>
         )}

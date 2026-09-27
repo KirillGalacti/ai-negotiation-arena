@@ -1,8 +1,8 @@
 import { BrandLogo } from "@/components/brand-logo";
 
-const sections: Array<{ label: string; image: string; active?: boolean }> = [
+const sections: Array<{ label: string; image: string; activeImage?: string; active?: boolean }> = [
   { label: "Обзор", image: "home" },
-  { label: "Обучение", image: "mentor", active: true },
+  { label: "Обучение", image: "learning", activeImage: "learning-active", active: true },
   { label: "Практика", image: "negotiations" },
   { label: "Прогресс", image: "skills" },
   { label: "Тренировки", image: "training" },
@@ -16,7 +16,7 @@ export function ReportSidebar() {
         <BrandLogo />
       </a>
       <nav className="report-sidebar-nav" aria-label="Разделы">
-        {sections.map(({ label, image, active }) => (
+        {sections.map(({ label, image, activeImage, active }) => (
           <button
             className={`report-sidebar-icon${active ? " is-active" : ""}`}
             type="button"
@@ -25,7 +25,7 @@ export function ReportSidebar() {
             aria-current={active ? "page" : undefined}
             key={label}
           >
-            <img src={`/icons/${image}.svg`} alt="" draggable="false" />
+            <img src={`/icons/${active && activeImage ? activeImage : image}.svg`} alt="" draggable="false" />
           </button>
         ))}
       </nav>

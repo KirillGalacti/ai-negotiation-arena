@@ -5,6 +5,7 @@ export type LessonResultStatus = "independent" | "supported" | "repeat" | "unass
 
 export interface SessionEvent {
   id: string;
+  clientEventId?: string;
   type: string;
   occurredAt: string;
   turnId?: string;
@@ -18,6 +19,8 @@ export interface HintUsage {
   level: HintLevel;
   occurredAt: string;
   afterTurnId?: string;
+  opportunityId?: string;
+  text?: string;
 }
 
 export interface OpportunityAnalysis {
@@ -70,6 +73,8 @@ export interface StoredAttempt {
   transcript: ChatMessage[];
   events: SessionEvent[];
   hints: HintUsage[];
+  completionState?: "ACTIVE" | "CLOSING_REQUIRED" | "CLOSING_REPLY" | "EVALUATING" | "COMPLETED";
+  completionReason?: "GOAL_COMPLETE" | "LIMIT_REACHED" | "MANUAL" | "RESISTANCE" | "TECHNICAL";
   parentAttemptId?: string;
   replayFromTurnId?: string;
   analysis?: ReportAnalysis;
