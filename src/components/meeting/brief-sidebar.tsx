@@ -1,4 +1,3 @@
-import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { HintLevel } from "@/types/reporting";
 
@@ -35,12 +34,9 @@ export function BriefSidebar({
           aria-controls="brief-facts"
         >
           <span>Бриф и факты</span>
-          <ChevronDown
-            size={18}
-            strokeWidth={2}
-            aria-hidden="true"
-            className={cn("transition-transform", briefOpen && "rotate-180")}
-          />
+          <svg className="brief-chevron" viewBox="-2 -2 20 12" fill="none" aria-hidden="true">
+            <path d={briefOpen ? "M0 8 8 0 16 8" : "M0 0 8 8 16 0"} stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
 
         <div
@@ -118,7 +114,7 @@ export function BriefSidebar({
           </>
         ) : (
           <>
-            <p>Появится здесь, только если вы попросите подсказку. Сам в разговор не вмешивается.</p>
+            <p>Появится здесь, только если вы попросите подсказку. Сам в разговор не вмешивается</p>
             <div className="mentor-options" aria-label="Уровни подсказок">
               {hintSteps.map(({ label, icon }) => (
                 <div className="mentor-option" key={label}>
@@ -127,7 +123,7 @@ export function BriefSidebar({
                 </div>
               ))}
             </div>
-            <small>Подсказка не снижает оценку качества ответа — попытка отмечается как выполненная с поддержкой.</small>
+            <small>Подсказка не снижает оценку качества ответа — попытка отмечается как выполненная с поддержкой</small>
           </>
         )}
       </section>

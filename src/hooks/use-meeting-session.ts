@@ -2,9 +2,12 @@ import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { initialMessages, openingMessage } from "@/data/lesson";
 import { hintText, inferB3L2Opportunity, isVoiceHintCommand, nextHintLevel, resolveHintPolicy } from "@/lib/lesson-hints";
 import { getAttempt, getAttemptPrefix, saveAttempt } from "@/services/attempt-storage";
+import { useCounterpartyVoice } from "@/hooks/use-counterparty-voice";
 import { requestAssistantReply, transcribeAudio } from "@/services/meeting-api";
 import type { ChatMessage, CompletionState, DialogKind, SessionState } from "@/types/meeting";
 import type { HintLevel, SessionEvent, StoredAttempt, HintUsage } from "@/types/reporting";
+
+export const MIC_LEVEL_COUNT = 36;
 
 function formatTime(seconds: number) {
   const minutes = Math.floor(seconds / 60).toString().padStart(2, "0");
@@ -45,10 +48,15 @@ export function useMeetingSession() {
   const [currentHintText, setCurrentHintText] = useState("");
   const [completionState, setCompletionState] = useState<CompletionState>("ACTIVE");
   const [activeDialog, setActiveDialog] = useState<DialogKind | null>("intro");
+  const [micLevels, setMicLevels] = useState<number[]>([]);
+  const voice = useCounterpartyVoice((message) => setNotice(message));
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const discardRecordingRef = useRef(false);
+  const levelContextRef = useRef<AudioContext | null>(null);
+  const levelFrameRef = useRef<number | null>(null);
   const recordingTimerRef = useRef<number | null>(null);
   const transcriptRef = useRef<HTMLTextAreaElement | null>(null);
   const conversationRef = useRef<HTMLDivElement | null>(null);
@@ -69,11 +77,13 @@ export function useMeetingSession() {
     wasClosing: boolean;
   } | null>(null);
   const pendingHintRequestRef = useRef(false);
+  const lastReplyIdRef = useRef<string | null>(null);
   const hintFlowBusyRef = useRef(false);
   const isSendingRef = useRef(false);
   const chatAbortRef = useRef<AbortController | null>(null);
   const transcriptionAbortRef = useRef<AbortController | null>(null);
   const startingRecordingRef = useRef(false);
+  const retryConnectionPendingRef = useRef(false);
   const hintsRef = useRef<HintUsage[]>([]);
   const initialEventTime = startedAtRef.current;
   const eventsRef = useRef<SessionEvent[]>([
@@ -89,6 +99,14 @@ export function useMeetingSession() {
       ]
       : []),
   ]);
+
+  useEffect(() => {
+    if (!retryConnectionPendingRef.current || activeDialog || inputMode !== "text") return;
+    const form = transcriptRef.current?.form;
+    if (!form) return;
+    retryConnectionPendingRef.current = false;
+    form.requestSubmit();
+  }, [activeDialog, inputMode]);
 
   function createAttempt(transcript = messages, endedAt?: string, finishReason?: StoredAttempt["finishReason"]): StoredAttempt {
     return {
@@ -150,6 +168,13 @@ export function useMeetingSession() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const latest = [...messagesRef.current].reverse().find((message) => message.role === "assistant");
+    if (latest) voice.prefetch(latest.content);
+    // Only the line shown behind the intro dialog needs to be ready in advance.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const latestAssistantMessage = useMemo(
     () => [...messages].reverse().find((message) => message.role === "assistant")?.content || openingMessage,
     [messages],
@@ -165,13 +190,49 @@ export function useMeetingSession() {
     mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
     chatAbortRef.current?.abort();
     transcriptionAbortRef.current?.abort();
+    stopLevelMeter();
   }, []);
+
+  function stopLevelMeter() {
+    if (levelFrameRef.current !== null) window.cancelAnimationFrame(levelFrameRef.current);
+    levelFrameRef.current = null;
+    void levelContextRef.current?.close().catch(() => undefined);
+    levelContextRef.current = null;
+  }
+
+  function startLevelMeter(stream: MediaStream) {
+    stopLevelMeter();
+    setMicLevels([]);
+    try {
+      const context = new AudioContext();
+      const analyser = context.createAnalyser();
+      analyser.fftSize = 1024;
+      context.createMediaStreamSource(stream).connect(analyser);
+      levelContextRef.current = context;
+      const samples = new Float32Array(analyser.fftSize);
+      let lastPush = 0;
+      const tick = (time: number) => {
+        levelFrameRef.current = window.requestAnimationFrame(tick);
+        if (time - lastPush < 90 || sessionStateRef.current !== "active") return;
+        lastPush = time;
+        analyser.getFloatTimeDomainData(samples);
+        let sum = 0;
+        for (const sample of samples) sum += sample * sample;
+        const level = Math.min(1, Math.sqrt(sum / samples.length) * 6);
+        setMicLevels((levels) => [...levels.slice(-(MIC_LEVEL_COUNT - 1)), level]);
+      };
+      levelFrameRef.current = window.requestAnimationFrame(tick);
+    } catch {
+      // The waveform is decorative; recording works without Web Audio.
+    }
+  }
 
   function isSessionActive() {
     return sessionStateRef.current === "active";
   }
 
   function resetRecordingResources() {
+    stopLevelMeter();
     if (recordingTimerRef.current !== null) {
       window.clearInterval(recordingTimerRef.current);
       recordingTimerRef.current = null;
@@ -198,7 +259,6 @@ export function useMeetingSession() {
       }
       setHasTranscribedInput(Boolean(data.text.trim()));
       setInput((current) => [current.trim(), data.text.trim()].filter(Boolean).join(" "));
-      setInputMode("text");
       window.setTimeout(() => {
         if (sessionStateRef.current === "active") transcriptRef.current?.focus();
       }, 0);
@@ -217,7 +277,7 @@ export function useMeetingSession() {
   }
 
   async function startRecording() {
-    if (startingRecordingRef.current || !isSessionActive()) return;
+    if (startingRecordingRef.current || !isSessionActive() || voice.isSpeaking) return;
     setNotice(null);
 
     if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
@@ -240,6 +300,7 @@ export function useMeetingSession() {
       const mimeType = preferredTypes.find((type) => MediaRecorder.isTypeSupported(type));
       const recorder = new MediaRecorder(stream, mimeType ? { mimeType, audioBitsPerSecond: 48_000 } : undefined);
       audioChunksRef.current = [];
+      discardRecordingRef.current = false;
       mediaRecorderRef.current = recorder;
 
       recorder.addEventListener("dataavailable", (event) => {
@@ -249,6 +310,10 @@ export function useMeetingSession() {
         const audioBlob = new Blob(audioChunksRef.current, { type: recorder.mimeType || "audio/webm" });
         resetRecordingResources();
         if (sessionStateRef.current === "finished") return;
+        if (discardRecordingRef.current) {
+          discardRecordingRef.current = false;
+          return;
+        }
         if (audioBlob.size > 0) void transcribeRecording(audioBlob);
         else setNotice("Запись получилась пустой. Проверьте микрофон.");
       });
@@ -258,6 +323,7 @@ export function useMeetingSession() {
       });
 
       recorder.start(250);
+      startLevelMeter(stream);
       setRecordingSeconds(0);
       setIsRecording(true);
       recordingTimerRef.current = window.setInterval(() => {
@@ -285,7 +351,13 @@ export function useMeetingSession() {
       stopRecording();
       return;
     }
-    if (!isTranscribing && !isPaused && !isFinished) void startRecording();
+    if (!isTranscribing && !isPaused && !isFinished && !voice.isSpeaking) void startRecording();
+  }
+
+  function cancelRecording() {
+    if (!isRecording) return;
+    discardRecordingRef.current = true;
+    stopRecording();
   }
 
   function updateCompletionState(next: CompletionState, reason?: StoredAttempt["completionReason"]) {
@@ -323,6 +395,8 @@ export function useMeetingSession() {
     if (!wasClosing && data.scenarioOutcome && data.scenarioOutcome !== "UNKNOWN") scenarioOutcomeRef.current = data.scenarioOutcome;
     messagesRef.current = updatedMessages;
     setMessages(updatedMessages);
+    lastReplyIdRef.current = reply.id;
+    void voice.speak(reply.id, reply.content);
 
     if (wasClosing || data.completionState === "COMPLETED") {
       const endedAt = new Date().toISOString();
@@ -361,7 +435,7 @@ export function useMeetingSession() {
     event.preventDefault();
     const content = input.trim();
     const wasClosing = completionStateRef.current === "CLOSING_REQUIRED";
-    if (!content || isSendingRef.current || !isSessionActive() ||
+    if (!content || isSendingRef.current || !isSessionActive() || voice.isSpeaking ||
       (completionStateRef.current !== "ACTIVE" && !wasClosing)) return;
 
     const previousMessages = messagesRef.current;
@@ -410,8 +484,8 @@ export function useMeetingSession() {
       setInput(content);
       if (wasClosing) updateCompletionState("CLOSING_REQUIRED");
       persistAttempt(previousMessages);
-      setNotice(error instanceof Error ? error.message : "Не удалось получить ответ");
-      if (pendingHintRequestRef.current && !wasClosing) deliverHintRequest();
+      // The connection dialog explains the failure; a second banner would cover the header.
+      setActiveDialog("connection");
     } finally {
       chatAbortRef.current = null;
       isSendingRef.current = false;
@@ -425,6 +499,7 @@ export function useMeetingSession() {
     setIsPaused(true);
     const recorder = mediaRecorderRef.current;
     if (recorder?.state === "recording") recorder.pause();
+    voice.pause();
     mediaStreamRef.current?.getAudioTracks().forEach((track) => { track.enabled = false; });
   }
 
@@ -435,6 +510,7 @@ export function useMeetingSession() {
     mediaStreamRef.current?.getAudioTracks().forEach((track) => { track.enabled = true; });
     const recorder = mediaRecorderRef.current;
     if (recorder?.state === "paused") recorder.resume();
+    voice.resume();
     const reply = pendingReplyRef.current;
     pendingReplyRef.current = null;
     if (reply) commitAssistantReply(reply);
@@ -451,9 +527,32 @@ export function useMeetingSession() {
   }
 
   function dismissDialog() {
+    if (activeDialog === "intro") {
+      const latest = [...messagesRef.current].reverse().find((message) => message.role === "assistant");
+      if (latest && sessionStateRef.current === "active") void voice.speak(latest.id, latest.content);
+    }
     if (activeDialog === "pause" || activeDialog === "finish") resumeSession();
     if (activeDialog === "hint") hintFlowBusyRef.current = false;
     setActiveDialog(null);
+  }
+
+  function retryConnection() {
+    if (sessionStateRef.current === "finished") return;
+    if (sessionStateRef.current === "paused") resumeSession();
+    retryConnectionPendingRef.current = true;
+    setNotice(null);
+    setInputMode("text");
+    setActiveDialog(null);
+  }
+
+  function switchToTextAfterError() {
+    if (sessionStateRef.current === "finished") return;
+    if (sessionStateRef.current === "paused") resumeSession();
+    retryConnectionPendingRef.current = false;
+    setNotice(null);
+    setInputMode("text");
+    setActiveDialog(null);
+    window.setTimeout(() => transcriptRef.current?.focus(), 0);
   }
 
   function finishSession() {
@@ -481,6 +580,8 @@ export function useMeetingSession() {
     chatAbortRef.current?.abort();
     transcriptionAbortRef.current?.abort();
     pendingReplyRef.current = null;
+    voice.stop();
+    discardRecordingRef.current = true;
     stopRecording();
     resetRecordingResources();
     setIsSending(false);
@@ -510,7 +611,7 @@ export function useMeetingSession() {
   }
 
   function requestHint() {
-    if (!hintPolicy?.enabled || completionStateRef.current !== "ACTIVE" ||
+    if (!hintPolicy?.enabled || completionStateRef.current !== "ACTIVE" || voice.isSpeaking ||
       sessionStateRef.current !== "active" || hintFlowBusyRef.current) return;
     hintFlowBusyRef.current = true;
     const latest = messagesRef.current.at(-1);
@@ -564,13 +665,20 @@ export function useMeetingSession() {
     sessionId: sessionIdRef.current,
     messages,
     input,
-    setInput,
+    setInput: (value: string) => {
+      setInput(value);
+      if (!value.trim()) setHasTranscribedInput(false);
+    },
     hasTranscribedInput,
     inputMode,
     setInputMode,
     isSending,
     isRecording,
     isTranscribing,
+    isSpeaking: voice.isSpeaking,
+    // A new reply joins the transcript panel once the director has finished saying it.
+    speakingMessageId: voice.speakingId && voice.speakingId === lastReplyIdRef.current ? voice.speakingId : null,
+    micLevels,
     recordingSeconds,
     isPaused,
     isFinished,
@@ -592,9 +700,12 @@ export function useMeetingSession() {
     latestAssistantMessage,
     recordingTime: formatTime(recordingSeconds),
     toggleRecording,
+    cancelRecording,
     sendMessage,
     openDialog,
     dismissDialog,
+    retryConnection,
+    switchToTextAfterError,
     finishSession,
   };
 }

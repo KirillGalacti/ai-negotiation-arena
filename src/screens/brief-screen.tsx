@@ -1,5 +1,6 @@
-import { ArrowRight, UserRound } from "lucide-react";
+import { UserRound } from "lucide-react";
 import { ArenaHeader } from "@/components/arena-header";
+import { LongArrow } from "@/components/long-arrow";
 import { Button } from "@/components/ui/button";
 
 export function BriefScreen() {
@@ -25,7 +26,7 @@ export function BriefScreen() {
           </section>
           <section className="brief-screen-section brief-screen-lesson">
             <h3>ФОКУС УРОКА</h3>
-            <p>На этом уроке важнее проверить интересы, чем убедить контрагента любой ценой. Скрытые интересы директора в брифе не раскрываются — их предстоит выяснить в разговоре.</p>
+            <p>На этом уроке важнее проверить интересы, чем убедить контрагента любой ценой.<br className="stage-break" /> Скрытые интересы директора в брифе не раскрываются —<br className="stage-break" /> их предстоит выяснить в разговоре.</p>
           </section>
         </article>
 
@@ -60,10 +61,10 @@ export function BriefScreen() {
             </div>
           </article>
           <div className="brief-screen-actions">
-            <Button type="button" variant="outline" className="brief-back">Вернуться к теории</Button>
+            <Button type="button" variant="outline" className="brief-back" onClick={() => { window.location.search = "?screen=intro"; }}>Вернуться к теории</Button>
             <Button type="button" className="brief-start" onClick={() => { window.location.search = "?screen=meeting"; }}>
               Начать встречу
-              <ArrowRight aria-hidden="true" />
+              <LongArrow />
             </Button>
           </div>
         </div>

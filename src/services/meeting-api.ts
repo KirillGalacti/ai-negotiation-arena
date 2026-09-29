@@ -45,6 +45,21 @@ export async function transcribeAudio(blob: Blob, signal: AbortSignal) {
   return readJson<{ text: string }>(response);
 }
 
+export async function synthesizeSpeech(text: string, signal: AbortSignal): Promise<Blob> {
+  const response = await fetch("/api/speak", {
+    method: "POST",
+    signal,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+  if (!response.ok) {
+    await readJson(response);
+  }
+  const audio = await response.blob();
+  if (!audio.size) throw new Error("Сервер вернул пустую озвучку.");
+  return audio;
+}
+
 export async function requestAssistantReply(
   messages: ChatMessage[],
   signal: AbortSignal,

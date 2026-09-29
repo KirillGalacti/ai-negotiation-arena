@@ -8,7 +8,7 @@
     "dev:client": "vite",
     "dev:server": "tsx watch server/index.ts",
     "build": "tsc -b && vite build",
-    "test:unit": "node --import tsx --test tests/hints-and-completion.test.ts",
+    "test:unit": "node --import tsx --test \"tests/**/*.test.ts\"",
     "start": "tsx server/index.ts"
   },
   "dependencies": {

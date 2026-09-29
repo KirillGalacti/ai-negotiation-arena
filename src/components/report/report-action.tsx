@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { LongArrow } from "@/components/long-arrow";
 
 interface ReportActionProps {
   children: string;
@@ -10,7 +10,7 @@ interface ReportActionProps {
 
 export function ReportAction({ children, href, primary = false, emphasis = false, onClick }: ReportActionProps) {
   const className = `report-action${primary ? " is-primary" : emphasis ? " is-emphasis" : ""}`;
-  const content = <>{children}<ArrowRight aria-hidden="true" size={23} strokeWidth={1.8} /></>;
+  const content = <>{children}<LongArrow /></>;
   return href
     ? <a className={className} href={href}>{content}</a>
     : <button className={className} type="button" onClick={onClick} disabled={!onClick}>{content}</button>;

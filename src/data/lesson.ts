@@ -29,6 +29,12 @@ export const dialogContent: Record<DialogKind, DialogContent> = {
     secondary: "Завершить",
     primary: "Продолжить разговор",
   },
+  connection: {
+    title: "Связь прервалась",
+    description: "Ваша реплика сохранена, попытка не потеряна. Можно повторить отправку или продолжить текстом.",
+    secondary: "Перейти в текст",
+    primary: "Повторить",
+  },
 };
 
 export const openingMessage =
@@ -43,9 +49,4 @@ export const progressSteps = [
   { number: 2, label: "Бриф" },
   { number: 3, label: "Встреча" },
   { number: 4, label: "Разбор" },
-];
-
-export const waveform = [
-  18, 32, 48, 38, 62, 45, 26, 53, 68, 46, 31, 22, 17, 28, 42, 55, 34, 65,
-  29, 21, 51, 36, 69, 40, 26, 58, 72, 33, 24, 18, 27, 39, 56, 43,
 ];

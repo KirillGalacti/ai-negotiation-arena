@@ -10,6 +10,14 @@ import "@fontsource/montserrat-alternates/600.css";
 import "@fontsource/montserrat-alternates/700.css";
 import App from "./App";
 import "./index.css";
+import "./styles/components-base.css";
+import "./styles/stage.css";
+import "./styles/stage-reports.css";
+import { installStageScaling } from "@/lib/stage";
+import { installTruncationTitles } from "@/lib/truncation-titles";
+
+installStageScaling();
+installTruncationTitles();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

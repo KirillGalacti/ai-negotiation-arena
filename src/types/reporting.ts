@@ -48,6 +48,10 @@ export interface ReportAnalysis {
   opportunities: OpportunityAnalysis[];
   outcomeTitle: string;
   outcomeDetails: string;
+  /** Short outcome label for compact cells, e.g. «пилот обсуждается». */
+  outcomeShort?: string;
+  /** Evidence line under each interest, keyed by interest text. */
+  interestNotes?: Record<string, string>;
   outcomeConditions: string[];
   confirmedInterests: string[];
   unconfirmedHypotheses: string[];

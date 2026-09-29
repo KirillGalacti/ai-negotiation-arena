@@ -83,3 +83,14 @@ test("an empty analysis response produces a recoverable error", async () => {
     globalThis.fetch = originalFetch;
   }
 });
+
+test("director reply is cut before an invented user turn", async () => {
+  const { cleanDirectorReply } = await import("../server/reply-cleanup");
+  assert.equal(
+    cleanDirectorReply("Да, именно так. Мы привыкли оперативно реагировать.\n\nПользователь: Есть ли опасения?"),
+    "Да, именно так. Мы привыкли оперативно реагировать.",
+  );
+  assert.equal(cleanDirectorReply("Директор: Вернёмся к этому через полгода."), "Вернёмся к этому через полгода.");
+  assert.equal(cleanDirectorReply("«Мастера перегружены.»"), "Мастера перегружены.");
+  assert.equal(cleanDirectorReply("Вы правы, сроки важны."), "Вы правы, сроки важны.");
+});

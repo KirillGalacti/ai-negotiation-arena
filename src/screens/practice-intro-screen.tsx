@@ -1,5 +1,5 @@
-import { ArrowRight } from "lucide-react";
 import { ArenaHeader } from "@/components/arena-header";
+import { LongArrow } from "@/components/long-arrow";
 import { ProgressNumber } from "@/components/progress-number";
 import { Button } from "@/components/ui/button";
 
@@ -56,7 +56,7 @@ export function PracticeIntroScreen() {
             onClick={() => { window.location.search = "?screen=brief"; }}
           >
             К практике
-            <ArrowRight aria-hidden="true" />
+            <LongArrow />
           </Button>
         </article>
 

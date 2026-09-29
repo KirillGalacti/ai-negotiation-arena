@@ -3,9 +3,9 @@ import { BrandLogo } from "@/components/brand-logo";
 const sections: Array<{ label: string; image: string; activeImage?: string; active?: boolean }> = [
   { label: "Обзор", image: "home" },
   { label: "Обучение", image: "learning", activeImage: "learning-active", active: true },
+  { label: "Тренировки", image: "training" },
   { label: "Практика", image: "negotiations" },
   { label: "Прогресс", image: "skills" },
-  { label: "Тренировки", image: "training" },
   { label: "Достижения", image: "history" },
 ];
 
@@ -31,7 +31,7 @@ export function ReportSidebar() {
       </nav>
       <div className="report-sidebar-bottom" aria-label="Профиль и настройки">
         <button className="report-sidebar-account" type="button" title="Профиль" aria-label="Профиль">
-          <img src="/report-sidebar/profile.png" alt="" draggable="false" />
+          <img src="/icons/profile.svg" alt="" draggable="false" />
         </button>
         <button className="report-sidebar-settings" type="button" title="Настройки" aria-label="Настройки">
           <img src="/icons/settings.svg" alt="" draggable="false" />

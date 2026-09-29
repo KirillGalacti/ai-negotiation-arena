@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { Check, CircleHelp } from "lucide-react";
+import { CounterpartyAvatar } from "@/components/counterparty-avatar";
+import { ProgressNumber } from "@/components/progress-number";
 import { ReportAction } from "@/components/report/report-action";
 import { ReportLayout } from "@/components/report/report-layout";
+import { ScoreFraction } from "@/components/report/score-fraction";
 import { ReportState } from "@/components/report/report-state";
 import { referenceFullReport } from "@/data/report-reference-preview";
 import { useReportingAttempt } from "@/hooks/use-reporting-attempt";
@@ -19,10 +21,6 @@ function turnTime(attempt: StoredAttempt, turnId?: string) {
   if (!turn?.createdAt) return "время не зафиксировано";
   const elapsed = Math.max(0, Math.round((Date.parse(turn.createdAt) - Date.parse(attempt.startedAt)) / 1000));
   return `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`;
-}
-
-function scoreLabel(score: number | null) {
-  return score === null ? "N/A" : `${score} из 4`;
 }
 
 function durationLabel(attempt: StoredAttempt) {
@@ -48,6 +46,25 @@ function opportunitiesHeading(count: number) {
   if (count === 2) return "Разбор двух возможностей";
   if (count === 3) return "Разбор трёх возможностей";
   return "Разбор возможностей";
+}
+
+function CheckIcon() {
+  return (
+    <svg className="report-interest-icon" viewBox="0 0 30 30" fill="none" aria-hidden="true">
+      <circle cx="15" cy="15" r="14" stroke="currentColor" strokeWidth="2" />
+      <path d="M8.7 15.4 12.9 19.6 21.4 10.4" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function HypothesisIcon() {
+  return (
+    <svg className="report-interest-icon is-hypothesis" viewBox="0 0 30 30" fill="none" aria-hidden="true">
+      <circle cx="15" cy="15" r="14" stroke="currentColor" strokeWidth="2" strokeDasharray="3 2.4" />
+      <path d="M11.4 12a3.7 3.7 0 1 1 5.3 3.3c-1 .5-1.7 1.4-1.7 2.5v.6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="15" cy="22" r="1.2" fill="currentColor" />
+    </svg>
+  );
 }
 
 function BackToTopButton() {
@@ -81,13 +98,17 @@ function BackToTopButton() {
   );
 }
 
-function OpportunityCard({ item, attempt }: { item: OpportunityAnalysis; attempt: StoredAttempt }) {
-  const replayHref = `?screen=replay&attempt=${encodeURIComponent(attempt.id)}&turn=${encodeURIComponent(item.positionTurnId)}`;
+function OpportunityCard({ item, attempt, preview }: { item: OpportunityAnalysis; attempt: StoredAttempt; preview: boolean }) {
+  const replayHref = preview ? "?screen=replay" : `?screen=replay&attempt=${encodeURIComponent(attempt.id)}&turn=${encodeURIComponent(item.positionTurnId)}`;
+  const score = item.score;
   return (
     <article className="report-opportunity-card">
       <div className="report-opportunity-top">
         <span>ВОЗМОЖНОСТЬ {item.opportunityId.replace("O", "")} · {turnTime(attempt, item.positionTurnId)}</span>
-        <strong>{item.score ?? "—"}<small> из 4</small></strong>
+        <strong aria-label={score === null ? "Не оценено" : `${score} из 4`}>
+          {score !== null && score >= 1 && score <= 4 ? <ProgressNumber number={score} /> : "—"}
+          <small> из 4</small>
+        </strong>
       </div>
       <div className="report-opportunity-position"><small>Позиция · директор</small><p>«{item.positionText}»</p></div>
       <div className="report-quote-ticket"><span>Ваша реплика</span><i aria-hidden="true" /><p>«{item.responseText}»</p></div>
@@ -101,9 +122,20 @@ function OpportunityCard({ item, attempt }: { item: OpportunityAnalysis; attempt
   );
 }
 
-function LiveFullReport({ attempt }: { attempt: StoredAttempt }) {
+function interestNote(attempt: StoredAttempt, interest: string, confirmed: boolean) {
   const analysis = attempt.analysis!;
-  const attemptQuery = `&attempt=${encodeURIComponent(attempt.id)}`;
+  const explicit = analysis.interestNotes?.[interest];
+  if (explicit) return explicit;
+  const opportunity = analysis.opportunities.find((item) => item.interestHypothesis === interest);
+  if (confirmed && opportunity?.interestConfirmed && opportunity.reactionTurnId) {
+    return `подтвердил в ответ на ваш вопрос · ${turnTime(attempt, opportunity.reactionTurnId)}`;
+  }
+  return confirmed ? "подтверждено в разговоре" : "вопросом не проверено";
+}
+
+function LiveFullReport({ attempt, preview = false }: { attempt: StoredAttempt; preview?: boolean }) {
+  const analysis = attempt.analysis!;
+  const attemptQuery = preview ? "&preview=reference" : `&attempt=${encodeURIComponent(attempt.id)}`;
   const keyTurn = attempt.transcript.find((turn) => turn.id === analysis.keyMomentTurnId);
   const keyOpportunity = analysis.opportunities.find((item) =>
     item.positionTurnId === analysis.keyMomentTurnId || item.responseTurnId === analysis.keyMomentTurnId,
@@ -111,6 +143,7 @@ function LiveFullReport({ attempt }: { attempt: StoredAttempt }) {
   const meetingConditions = analysis.outcomeConditions.length > 0
     ? analysis.outcomeConditions
     : analysis.confirmedInterests;
+  const needsRepeat = analysis.status === "repeat" || analysis.status === "unassessed";
 
   return (
     <ReportLayout title="Полный отчёт" location="Полный отчёт" className="full-report-page">
@@ -121,50 +154,53 @@ function LiveFullReport({ attempt }: { attempt: StoredAttempt }) {
             <h2>{statusLabels[analysis.status]}</h2>
             <p>Позиции и интересы · встреча с директором завода · {durationLabel(attempt)}</p>
           </div>
-          <div className="report-full-score"><strong>{analysis.score === null ? "N/A" : `${analysis.score}/4`}</strong><small>перевод позиции в интерес</small></div>
+          <div className="report-full-score"><strong><ScoreFraction text={analysis.score === null ? "N/A" : `${analysis.score}/4`} /></strong><small>перевод позиции в интерес</small></div>
           <div className="report-full-facts">
-            <div><small>Самостоятельность</small><strong>{attempt.hints.length ? `С поддержкой · ${attempt.hints.length} подсказ.` : "Без подсказок"}</strong></div>
+            <div className="is-accent"><small>Самостоятельность</small><strong>{attempt.hints.length ? `с поддержкой · ${attempt.hints.length} подсказ.` : "без подсказок"}</strong></div>
             <div><small>Возможности</small><strong>{analysis.validOpportunityCount} из 3 состоялись</strong></div>
-            <div><small>Исход встречи</small><strong>{analysis.outcomeTitle}</strong></div>
+            <div><small>Исход встречи</small><strong>{analysis.outcomeShort || analysis.outcomeTitle}</strong></div>
           </div>
         </section>
         <section className="report-full-outcome">
           <div className="report-full-outcome-copy">
             <span>ИСХОД<br />ВСТРЕЧИ</span>
             <h2>{analysis.outcomeTitle}</h2>
-            <p>{analysis.outcomeDetails || "Исход переговоров показывается отдельно от оценки навыка."}</p>
           </div>
-          <div className="report-outcome-avatar" aria-hidden="true"><span /><i /></div>
-          <small className="report-full-outcome-note">Исход сделки не влияет на оценку навыка</small>
+          <div className="report-outcome-avatar" aria-hidden="true"><CounterpartyAvatar layered /></div>
+          <small className="report-full-outcome-note">Исход сделки не влияет<br />на оценку навыка</small>
         </section>
       </div>
 
-      <section className="report-full-section">
+      <section className="report-full-section report-full-opportunities">
         <h2>{opportunitiesHeading(analysis.opportunities.length)}</h2>
         {analysis.opportunities.length
-          ? <div className="report-opportunities">{analysis.opportunities.map((item) => <OpportunityCard item={item} attempt={attempt} key={item.opportunityId} />)}</div>
+          ? <div className="report-opportunities">{analysis.opportunities.map((item) => <OpportunityCard item={item} attempt={attempt} preview={preview} key={item.opportunityId} />)}</div>
           : <p className="report-section-note">В транскрипте не найдено реплик, достаточных для доказательного разбора возможностей.</p>}
       </section>
 
-      <section className="report-full-section">
+      <section className="report-full-section report-full-interests">
         <h2>Интересы директора</h2>
         <div className="report-interests">
           <div>
             <h3>ПОДТВЕРЖДЕНО КОНТРАГЕНТОМ</h3>
             {analysis.confirmedInterests.length
-              ? analysis.confirmedInterests.map((interest) => <p key={interest}><Check aria-hidden="true" size={18} />{interest}</p>)
-              : <p><CircleHelp aria-hidden="true" size={18} />Подтверждённых интересов в этой попытке не зафиксировано.</p>}
+              ? analysis.confirmedInterests.map((interest) => (
+                <p key={interest}><CheckIcon /><span>{interest}<small>{interestNote(attempt, interest, true)}</small></span></p>
+              ))
+              : <p><HypothesisIcon /><span>Подтверждённых интересов в этой попытке не зафиксировано.</span></p>}
           </div>
           <div>
             <h3>ОСТАЛОСЬ ГИПОТЕЗОЙ</h3>
             {analysis.unconfirmedHypotheses.length
-              ? analysis.unconfirmedHypotheses.map((interest) => <p key={interest}><CircleHelp aria-hidden="true" size={18} />{interest}</p>)
-              : <p><CircleHelp aria-hidden="true" size={18} />Неподтверждённых гипотез не зафиксировано.</p>}
+              ? analysis.unconfirmedHypotheses.map((interest) => (
+                <p key={interest}><HypothesisIcon /><span>{interest}<small>{interestNote(attempt, interest, false)}</small></span></p>
+              ))
+              : <p><HypothesisIcon /><span>Неподтверждённых гипотез не зафиксировано.</span></p>}
           </div>
         </div>
       </section>
 
-      {attempt.hints.length > 0 && <section className="report-full-section">
+      {attempt.hints.length > 0 && <section className="report-full-section report-full-hints">
         <h2>Хронология подсказок</h2>
         <div className="report-event-list">{attempt.hints.map((hint, index) => (
             <p key={hint.id}><span>H{hint.level} · {turnTime(attempt, hint.afterTurnId)}</span>Подсказка наставника {index ? "использована повторно" : "запрошена пользователем"}.</p>
@@ -173,7 +209,7 @@ function LiveFullReport({ attempt }: { attempt: StoredAttempt }) {
 
       <div className="report-full-bottom">
         <section className="report-meeting-success">
-          <h2>Успех встречи</h2>
+          <h2>Исход встречи</h2>
           <p className="report-meeting-outcome-title">{analysis.outcomeTitle}</p>
           <strong className="report-meeting-conditions-title">{analysis.outcomeConditions.length > 0 ? "Условия, которые он назвал:" : "Подтверждённые интересы:"}</strong>
           {meetingConditions.length > 0
@@ -187,21 +223,25 @@ function LiveFullReport({ attempt }: { attempt: StoredAttempt }) {
             <div className="report-quote-ticket report-key-moment-ticket">
               <span>{turnTime(attempt, keyOpportunity.positionTurnId)} · директор</span><i aria-hidden="true" />
               <p>«{keyOpportunity.positionText}»</p>
-              <p className="report-key-moment-response"><strong>Вы ответили:</strong> «{keyOpportunity.responseText}»</p>
+              <p className="report-key-moment-response"><strong>Вы ответили: «{keyOpportunity.responseText}»</strong></p>
             </div>
           ) : keyTurn ? (
             <div className="report-quote-ticket"><span>{turnTime(attempt, keyTurn.id)} · {keyTurn.role === "assistant" ? "директор" : "вы"}</span><i aria-hidden="true" /><p>«{keyTurn.content}»</p></div>
           ) : <p>Ключевой момент не определён.</p>}
-          <small className="report-key-moment-guidance">Что попробовать: {keyOpportunity?.improvement || analysis.improvedWording || analysis.nextStep}</small>
+          <small className="report-key-moment-guidance">Что попробовать: {(keyOpportunity?.improvement || analysis.improvedWording || analysis.nextStep).replace(/^./, (letter) => letter.toLowerCase())}</small>
           {analysis.keyMomentTurnId && <ReportAction href={`?screen=replay${attemptQuery}&turn=${encodeURIComponent(analysis.keyMomentTurnId)}`}>Переиграть отсюда</ReportAction>}
         </section>
         <section className="report-next-lesson">
-          <span className="report-eyebrow">{analysis.status === "repeat" || analysis.status === "unassessed" ? "РЕКОМЕНДАЦИЯ" : "СЛЕДУЮЩИЙ УРОК"}</span>
-          <h2>{analysis.status === "repeat" || analysis.status === "unassessed" ? "Повторить ситуацию" : "Варианты взаимной выгоды"}</h2>
-          <p className="report-next-lesson-label">{analysis.status === "repeat" || analysis.status === "unassessed" ? "Блок 3 · Урок 2" : "Блок 3 · Урок 3"}</p>
-          <p>{analysis.status === "repeat" || analysis.status === "unassessed" ? analysis.nextStep : "Как предложить несколько вариантов, не уступая заранее."}</p>
-          <ReportAction primary href="?screen=brief">{analysis.status === "repeat" || analysis.status === "unassessed" ? "Повторить урок" : "Следующий урок"}</ReportAction>
+          <span className="report-eyebrow">{needsRepeat ? "РЕКОМЕНДАЦИЯ" : "СЛЕДУЮЩИЙ УРОК"}</span>
+          <h2>{needsRepeat ? "Повторить ситуацию" : "Варианты взаимной выгоды"}</h2>
+          <p className="report-next-lesson-label">{needsRepeat ? "Блок 3 · Урок 2" : "Блок 3 · Урок 3"}</p>
+          <p>{needsRepeat ? analysis.nextStep : "Как предложить несколько вариантов, не уступая заранее"}</p>
         </section>
+        <div className="report-next-lesson-action">
+          <ReportAction primary href={needsRepeat ? "?screen=brief" : `?screen=lesson-outcome${attemptQuery}`}>
+            {needsRepeat ? "Повторить урок" : "Следующий урок"}
+          </ReportAction>
+        </div>
       </div>
       <BackToTopButton />
     </ReportLayout>
@@ -211,7 +251,7 @@ function LiveFullReport({ attempt }: { attempt: StoredAttempt }) {
 export function FullReportScreen() {
   const isReferencePreview = new URLSearchParams(window.location.search).get("preview") === "reference";
   const reporting = useReportingAttempt(!isReferencePreview);
-  if (isReferencePreview) return <LiveFullReport attempt={referenceFullReport} />;
+  if (isReferencePreview) return <LiveFullReport attempt={referenceFullReport} preview />;
   if (!reporting.attempt || !reporting.attempt.analysis) {
     return <ReportState title="Полный отчёт" attempt={reporting.attempt} isAnalyzing={reporting.isAnalyzing} error={reporting.error} onRetry={reporting.retry} />;
   }

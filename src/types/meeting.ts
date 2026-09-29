@@ -1,5 +1,5 @@
 export type ChatRole = "user" | "assistant";
-export type DialogKind = "intro" | "hint" | "pause" | "finish";
+export type DialogKind = "intro" | "hint" | "pause" | "finish" | "connection";
 export type SessionState = "active" | "paused" | "finished";
 export type CompletionState = "ACTIVE" | "CLOSING_REQUIRED" | "CLOSING_REPLY" | "EVALUATING" | "COMPLETED";
 

@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Search, UserRound } from "lucide-react";
 import { ReportSidebar } from "@/components/report/report-sidebar";
 
 interface ReportLayoutProps {
@@ -11,24 +10,29 @@ interface ReportLayoutProps {
 
 export function ReportLayout({ title, location, children, className = "" }: ReportLayoutProps) {
   return (
-    <div className={`report-page ${className}`}>
-      <ReportSidebar />
-      <main className="report-main">
-        <header className="report-header">
-          <div>
-            <h1>{title}</h1>
-            <p>Главная / Обучение / Блок 3 / Урок 2 / {location}</p>
-          </div>
-          <div className="report-header-tools">
-            <label className="report-search">
-              <Search aria-hidden="true" size={18} />
-              <input type="search" placeholder="Поиск" aria-label="Поиск" />
-            </label>
-            <span className="report-header-user" aria-label="Профиль"><UserRound aria-hidden="true" size={22} /></span>
-          </div>
-        </header>
-        {children}
-      </main>
+    <div className="report-stage">
+      <div className={`report-page ${className}`}>
+        <ReportSidebar />
+        <main className="report-main">
+          <header className="report-header">
+            <div>
+              <h1>{title}</h1>
+              <p>Главная/Обучение/Блок 3 · Урок 2/{location}</p>
+            </div>
+            <div className="report-header-tools">
+              <label className="report-search">
+                <svg className="report-search-icon" viewBox="0 0 27 25" fill="none" aria-hidden="true">
+                  <circle cx="17" cy="9.5" r="8" stroke="currentColor" strokeWidth="2.2" />
+                  <path d="M11.2 15.2 2 23.3" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+                </svg>
+                <input type="search" placeholder="Поиск" aria-label="Поиск" />
+              </label>
+              <span className="report-header-user" aria-label="Профиль"><img src="/icons/profile-header.svg" alt="" /></span>
+            </div>
+          </header>
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

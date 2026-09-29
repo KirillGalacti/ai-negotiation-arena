@@ -6,6 +6,7 @@ import { MeetingStage } from "@/components/meeting/meeting-stage";
 import { SessionDialog } from "@/components/meeting/session-dialog";
 import { Button } from "@/components/ui/button";
 import { useMeetingSession } from "@/hooks/use-meeting-session";
+import { cn } from "@/lib/utils";
 
 export function MeetingScreen() {
   const session = useMeetingSession();
@@ -25,7 +26,7 @@ export function MeetingScreen() {
             <Button
               type="button"
               variant="outline"
-              className="pause-action rounded-full"
+              className={cn("pause-action rounded-full", session.activeDialog === "pause" && "is-active")}
               aria-haspopup="dialog"
               onClick={() => session.openDialog("pause")}
               disabled={session.isFinished}
@@ -57,6 +58,7 @@ export function MeetingScreen() {
         <ConversationPanel
           messages={session.messages}
           isSending={session.isSending}
+          hiddenMessageId={session.speakingMessageId}
           conversationRef={session.conversationRef}
         />
         <MeetingStage
@@ -68,14 +70,19 @@ export function MeetingScreen() {
           isSending={session.isSending}
           isRecording={session.isRecording}
           isTranscribing={session.isTranscribing}
+          isSpeaking={session.isSpeaking}
+          micLevels={session.micLevels}
           recordingTime={session.recordingTime}
           isPaused={session.isPaused}
           isFinished={session.isFinished}
           hintsAvailable={session.hintsAvailable}
+          hintVisible={session.hintVisible}
+          activeDialog={session.activeDialog}
           completionState={session.completionState}
           transcriptRef={session.transcriptRef}
           latestAssistantMessage={session.latestAssistantMessage}
           onToggleRecording={session.toggleRecording}
+          onCancelRecording={session.cancelRecording}
           onSendMessage={session.sendMessage}
           onOpenDialog={session.openDialog}
           onOpenReport={() => {
@@ -100,6 +107,8 @@ export function MeetingScreen() {
         onDismiss={session.dismissDialog}
         onFinish={finishAndOpenReport}
         onRevealHint={session.revealHint}
+        onRetryConnection={session.retryConnection}
+        onSwitchToText={session.switchToTextAfterError}
       />
     </main>
   );

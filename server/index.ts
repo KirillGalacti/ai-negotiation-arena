@@ -7,6 +7,7 @@ import express from "express";
 import multer from "multer";
 import OpenAI from "openai";
 import { assessCompletion, closingRequest } from "./completion-policy";
+import { cleanDirectorReply } from "./reply-cleanup";
 
 type ChatRole = "user" | "assistant";
 
@@ -363,7 +364,7 @@ app.post("/api/chat", async (request, response) => {
         temperature: 0.6,
         max_tokens: 900,
       });
-      const modelReply = result.choices[0]?.message?.content?.trim();
+      const modelReply = cleanDirectorReply(result.choices[0]?.message?.content ?? "");
       if (!modelReply) throw new Error("Модель вернула пустой ответ");
       const decision = assessCompletion([...messages, { role: "assistant", content: modelReply }]);
       if (closing) {
@@ -580,6 +581,72 @@ app.post(
     }
   },
 );
+
+const ttsVoice = process.env.YANDEX_TTS_VOICE || "ermil";
+const ttsSpeed = process.env.YANDEX_TTS_SPEED || "1.0";
+const speechCache = new Map<string, Promise<Buffer>>();
+
+function synthesizeSpeech(text: string): Promise<Buffer> {
+  const cached = speechCache.get(text);
+  if (cached) return cached;
+
+  const promise = (async () => {
+    const speechResponse = await fetch("https://tts.api.cloud.yandex.net/speech/v1/tts:synthesize", {
+      method: "POST",
+      headers: { Authorization: `Api-Key ${apiKey}` },
+      body: new URLSearchParams({
+        text,
+        lang: "ru-RU",
+        voice: ttsVoice,
+        speed: ttsSpeed,
+        format: "mp3",
+        folderId: folderId!,
+      }),
+    });
+    const audio = Buffer.from(await speechResponse.arrayBuffer());
+    if (!speechResponse.ok) {
+      let message = `SpeechKit вернул ${speechResponse.status}`;
+      try {
+        message = (JSON.parse(audio.toString("utf8")) as SpeechKitResponse).error_message || message;
+      } catch {
+        // SpeechKit can answer with plain text on gateway errors.
+      }
+      throw new Error(message);
+    }
+    return audio;
+  })();
+
+  speechCache.set(text, promise);
+  promise.catch(() => speechCache.delete(text));
+  if (speechCache.size > 50) speechCache.delete(speechCache.keys().next().value!);
+  return promise;
+}
+
+app.post("/api/speak", async (request, response) => {
+  const text = typeof request.body.text === "string"
+    ? request.body.text.replace(/\s+/g, " ").trim()
+    : "";
+
+  if (!text) {
+    response.status(400).json({ error: "Текст реплики не передан" });
+    return;
+  }
+
+  if (text.length > 4_000) {
+    response.status(413).json({ error: "Реплика слишком длинная для озвучивания" });
+    return;
+  }
+
+  try {
+    const audio = await synthesizeSpeech(text);
+    response.set("Cache-Control", "no-store").type("audio/mpeg").send(audio);
+  } catch (error) {
+    console.error("Ошибка синтеза речи:", error);
+    response.status(502).json({
+      error: error instanceof Error ? error.message : "Не удалось озвучить реплику",
+    });
+  }
+});
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const clientDist = path.resolve(currentDirectory, "../dist");

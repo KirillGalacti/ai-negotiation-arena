@@ -1048,6 +1048,13 @@ button {
   min-width: 460px;
 }
 
+.connection-dialog { width: min(840px, calc(100% - 32px)); padding: 48px 50px; }
+.connection-dialog h2 { font-size: 46px; }
+.connection-dialog > p { font-size: 19px; }
+.connection-dialog .session-dialog-actions { margin-top: 42px; }
+.connection-dialog .dialog-secondary { min-width: 200px; }
+.connection-dialog .dialog-primary { min-width: 255px; }
+
 .brief-screen-grid {
   align-self: start;
   display: grid;
@@ -1062,6 +1069,7 @@ button {
   font-family: "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
   padding-right: 6.25%;
   padding-bottom: 3.5dvh;
+  overflow-y: auto;
 }
 
 .brief-screen h1,
@@ -1766,6 +1774,14 @@ button {
     font-size: clamp(12px, 0.78vw, 15px);
     line-height: 1.35;
   }
+}
+
+@media (min-width: 1440px) {
+  .brief-screen-overview { min-height: 812px; }
+  .brief-screen-facts { min-height: 300px; }
+  .brief-screen-how { min-height: 330px; }
+  .brief-screen-actions { margin-top: 15px; }
+  .brief-screen-actions button { height: 60px; }
 }
 
 @media (max-width: 600px) {
@@ -2665,4 +2681,24 @@ button {
 
 .practice-intro-actions {
   grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 1500px) {
+  .brief-screen .arena-header { margin-bottom: 36px; }
+  .brief-screen-grid {
+    grid-template-columns: minmax(0, 1.158fr) minmax(0, 1fr);
+    gap: 40px;
+  }
+  .brief-screen-overview { padding: 48px; }
+  .brief-screen-title { margin-bottom: 19px; }
+  .brief-screen-section:not(.brief-screen-lesson) { margin-bottom: 10px; }
+  .brief-screen-task {
+    margin: 0 -16px 17px;
+    padding: 20px 32px;
+  }
+  .brief-screen-role { min-height: 40px; margin-left: 0; }
+  .brief-screen-facts { flex: 0 0 300px; padding: 32px; }
+  .brief-screen-how { padding: 32px; }
+  .brief-screen-actions { margin-top: 26px; }
+  .brief-screen-actions button { height: 56px; }
 }

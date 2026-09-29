@@ -5,10 +5,11 @@ import { cn } from "@/lib/utils";
 interface ConversationPanelProps {
   messages: ChatMessage[];
   isSending: boolean;
+  hiddenMessageId?: string | null;
   conversationRef: RefObject<HTMLDivElement | null>;
 }
 
-export function ConversationPanel({ messages, isSending, conversationRef }: ConversationPanelProps) {
+export function ConversationPanel({ messages, isSending, hiddenMessageId, conversationRef }: ConversationPanelProps) {
   return (
     <aside className="conversation-panel">
       <div className="panel-heading">
@@ -16,7 +17,7 @@ export function ConversationPanel({ messages, isSending, conversationRef }: Conv
         <p>Полный текст каждой реплики</p>
       </div>
       <div className="conversation-list" ref={conversationRef} aria-live="polite">
-        {messages.map((message) => (
+        {messages.filter((message) => message.id !== hiddenMessageId).map((message) => (
           <article key={message.id} className={cn("conversation-message", message.role)}>
             <strong>{message.role === "assistant" ? "Директор завода" : "Вы"}</strong>
             <p>{message.content}</p>
